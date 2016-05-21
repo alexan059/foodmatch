@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Foodmatch</string>
+    <string name="open_toolbar_text">Öffnen</string>
+    <string name="close_toolbar_text">Schließen</string>
 </resources>
