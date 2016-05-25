@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginTop="8dp"
+    android:layout_width="332dp"
+    android:layout_height="381dp"
+    android:background="@drawable/card_border">
+
+    <ImageView
+        android:layout_width="330dp"
+        android:layout_height="330dp"
+        android:layout_marginTop="1dp"
+        android:layout_gravity="top|center_horizontal"
+        android:id="@+id/imageView"
+        android:background="@drawable/pizza"
+        />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/card_border">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pizza Salami"
+            android:id="@+id/tvDish"
+            android:textColor="@color/colorPrimaryText"
+            android:layout_marginTop="8dp"
+            android:textSize="16dp"
+            android:layout_marginLeft="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lavoro - Prenzlauer Berg"
+            android:id="@+id/tvLocation"
+            android:textColor="@color/colorSecondaryText"
+            android:layout_gravity="left|center_vertical"
+            android:textSize="12dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="$$"
+            android:id="@+id/tvPricing"
+            android:layout_gravity="right|center_vertical"
+            android:layout_marginRight="20dp" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/ivDistance"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_place"
+            android:layout_marginLeft="30dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="500 m"
+            android:id="@+id/tvDistance"
+            android:layout_gravity="center"
+            android:layout_marginLeft="70dp" />
+
+    </FrameLayout>
+
+    <View
+        android:id="@+id/item_swipe_left_indicator"
+        android:alpha="0"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_margin="10dp"
+        android:background="#A5F" />
+
+    <View
+        android:id="@+id/item_swipe_right_indicator"
+        android:alpha="0"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_margin="10dp"
+        android:layout_gravity="right"
+        android:background="#5AF" />
+
+</FrameLayout>

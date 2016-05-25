@@ -41,13 +41,14 @@ public class BaseActivity extends AppCompatActivity {
      */
     private void initToolbarAndMenu() {
         setSupportActionBar(toolbar);
-        //toolbar.setNavigationIcon(R.drawable.ic_drawer); TODO add later
+        toolbar.setNavigationIcon(R.drawable.ic_menu);
 
         ActionBar actionBar = getSupportActionBar();
 
         if (actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(false);
+            actionBar.setDisplayShowTitleEnabled(false);
         }
 
         ListView drawerList = (ListView) findViewById(R.id.left_drawer);
