@@ -13,7 +13,6 @@ import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 import java.util.ArrayList;
 import java.util.Collections;
 
-
 public class MainActivity extends BaseActivity {
 
     private static final String TAG = "MainActivity";
