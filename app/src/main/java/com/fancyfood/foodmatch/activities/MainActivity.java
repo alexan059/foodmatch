@@ -11,6 +11,8 @@ import com.fancyfood.foodmatch.models.Card;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+
 
 public class MainActivity extends BaseActivity {
 
@@ -22,7 +24,6 @@ public class MainActivity extends BaseActivity {
     // For rating system
     private int like, dislike;
     private TextView tLikes, tDislikes;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,5 +114,7 @@ public class MainActivity extends BaseActivity {
             al.add(new Card(getSupportDrawable(R.drawable.steak), "Steak", "Blockhouse - Zoo", 2005, 2));
             al.add(new Card(getSupportDrawable(R.drawable.sushi), "Sushi", "Sushi Circle - Zehelndorf", 4000, 3));
         }
+        //shuffle List for randomize picture order
+        Collections.shuffle(al);
     }
 }
