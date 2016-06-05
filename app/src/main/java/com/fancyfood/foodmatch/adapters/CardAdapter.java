@@ -33,10 +33,6 @@ public class CardAdapter extends ArrayAdapter<Card> {
      */
     static class ViewHolder {
         ImageView image;
-        TextView dish;
-        TextView location;
-        TextView distance;
-        TextView pricing;
     }
 
     @Override
@@ -58,10 +54,6 @@ public class CardAdapter extends ArrayAdapter<Card> {
             // Assign views to view holder
             viewHolder = new ViewHolder();
             viewHolder.image = (ImageView) convertView.findViewById(R.id.imageView);
-            viewHolder.dish = (TextView) convertView.findViewById(R.id.tvDish);
-            viewHolder.location = (TextView) convertView.findViewById(R.id.tvLocation);
-            viewHolder.distance = (TextView) convertView.findViewById(R.id.tvDistance);
-            viewHolder.pricing = (TextView) convertView.findViewById(R.id.tvPricing);
 
             // Store view
             convertView.setTag(viewHolder);
@@ -70,14 +62,8 @@ public class CardAdapter extends ArrayAdapter<Card> {
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
-        String distance = Double.toString(getItem(position).getDistance()) + " m";
-
         // Assign new data to view holder
         viewHolder.image.setImageDrawable(getItem(position).getImage());
-        viewHolder.dish.setText(getItem(position).getDish());
-        viewHolder.location.setText(getItem(position).getLocation());
-        viewHolder.distance.setText(distance);
-        viewHolder.pricing.setText(getItem(position).getPricingDollars());
 
         // Return manipulated view
         return convertView;

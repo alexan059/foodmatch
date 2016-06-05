@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/imageView2"
+        android:src="@drawable/background1"
+        android:scaleType="centerCrop"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#AA000000"
+        android:paddingTop="40dp"
+        android:paddingBottom="40dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Foodmatch"
+            android:id="@+id/textView"
+            android:textSize="40dp"
+            android:layout_gravity="center"
+            android:textColor="@color/white" />
+
+        <TextView
+            android:layout_width="259dp"
+            android:layout_height="wrap_content"
+            android:text="Wir bringen dich mit dem besten Essen zusammen!"
+            android:id="@+id/textView2"
+            android:layout_gravity="center"
+            android:layout_marginBottom="30dp"
+            android:textColor="@color/white"
+            android:textAlignment="center" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ich bin hungrig"
+            android:id="@+id/btHungry"
+            android:layout_gravity="center"
+            style="@style/button"
+            android:layout_marginBottom="20dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Entdecken"
+            android:id="@+id/btDiscover"
+            android:layout_gravity="center"
+            style="@style/button"/>
+    </LinearLayout>
+
+</FrameLayout>
