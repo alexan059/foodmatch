@@ -16,8 +16,7 @@
         android:layout_height="wrap_content"
         app:rotation_degrees="16"
         app:max_visible="4"
-        app:min_adapter_stack="6"
-        android:background="@color/colorBackground" />
+        app:min_adapter_stack="6" />
 
     <LinearLayout
         android:orientation="horizontal"

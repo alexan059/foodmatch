@@ -1,6 +1,8 @@
 package com.fancyfood.foodmatch.activities;
 
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -22,7 +24,9 @@ public class BaseActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private FrameLayout contentFrame;
+    private CollapsingToolbarLayout collapsingToolbar;
     private Toolbar toolbar;
+    private AppBarLayout appBarLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +36,8 @@ public class BaseActivity extends AppCompatActivity {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         contentFrame = (FrameLayout) findViewById(R.id.content_view);
+        appBarLayout = (AppBarLayout) findViewById(R.id.app_bar_layout);
+        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
 
         initToolbarAndMenu();
     }
@@ -70,5 +76,17 @@ public class BaseActivity extends AppCompatActivity {
         LayoutInflater layoutInflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         View contentView = layoutInflater.inflate(layoutId, null, false);
         contentFrame.addView(contentView, 0);
+    }
+
+    public Toolbar getToolbar() {
+        return toolbar;
+    }
+
+    public AppBarLayout getAppBarLayout() {
+        return appBarLayout;
+    }
+
+    public CollapsingToolbarLayout getCollapsingToolbar() {
+        return collapsingToolbar;
     }
 }

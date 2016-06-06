@@ -2,16 +2,16 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_gravity="center_horizontal"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+    android:layout_width="300dp"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="30dp">
 
     <com.fancyfood.foodmatch.views.SquareImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|center_horizontal"
         android:id="@+id/imageView"
-        android:background="@drawable/pizza"
-        />
+        android:background="@drawable/pizza"/>
 
     <View
         android:id="@+id/item_swipe_left_indicator"
