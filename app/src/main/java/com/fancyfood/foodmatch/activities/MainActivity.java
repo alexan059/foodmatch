@@ -33,20 +33,25 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
     private CardAdapter cardAdapter;
     private String dish;
     private ArrayList<Card> al;
+    private SwipeFlingAdapterView flingContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         inflateView(R.layout.activity_main);
 
-        final Button btHungry = (Button) findViewById(R.id.btHungry);
-        final Button btDiscover = (Button) findViewById(R.id.btDiscover);
+        Button btHungry = (Button) findViewById(R.id.btHungry);
+        Button btDiscover = (Button) findViewById(R.id.btDiscover);
+        Button btLike = (Button) findViewById(R.id.btLike);
+        Button btDislike = (Button) findViewById(R.id.btDislike);
 
-        if (btHungry != null && btDiscover != null) {
+        if (btHungry != null && btDiscover != null && btLike != null && btDislike != null) {
             btHungry.setOnTouchListener(this);
             btHungry.setOnClickListener(this);
             btDiscover.setOnTouchListener(this);
             btDiscover.setOnClickListener(this);
+            btLike.setOnClickListener(this);
+            btDislike.setOnClickListener(this);
         }
 
         initFling();
@@ -55,7 +60,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
     final public void initFling() {
         // Find the Fling Container
-        SwipeFlingAdapterView flingContainer = (SwipeFlingAdapterView) findViewById(R.id.rating_cards);
+        flingContainer = (SwipeFlingAdapterView) findViewById(R.id.rating_cards);
 
         // Initialize Card List
         al = new ArrayList<Card>();
@@ -138,7 +143,22 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
     @Override
     public void onClick(View v) {
-        collapseToolbar();
+
+        switch (v.getId()) {
+            case R.id.btHungry:
+            case R.id.btDiscover:
+                collapseToolbar();
+                break;
+            case R.id.btLike:
+                flingContainer.getTopCardListener().selectRight();
+                break;
+            case R.id.btDislike:
+                flingContainer.getTopCardListener().selectLeft();
+                break;
+            default:
+                // Do nothing
+        }
+
     }
 
     public void collapseToolbar() {

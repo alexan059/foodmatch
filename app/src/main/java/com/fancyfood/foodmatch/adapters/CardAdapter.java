@@ -33,6 +33,8 @@ public class CardAdapter extends ArrayAdapter<Card> {
      */
     static class ViewHolder {
         ImageView image;
+        TextView dish;
+        TextView location;
     }
 
     @Override
@@ -53,7 +55,9 @@ public class CardAdapter extends ArrayAdapter<Card> {
 
             // Assign views to view holder
             viewHolder = new ViewHolder();
-            viewHolder.image = (ImageView) convertView.findViewById(R.id.imageView);
+            viewHolder.image = (ImageView) convertView.findViewById(R.id.ivDish);
+            viewHolder.dish = (TextView) convertView.findViewById(R.id.tvDish);
+            viewHolder.location = (TextView) convertView.findViewById(R.id.tvLocation);
 
             // Store view
             convertView.setTag(viewHolder);
@@ -64,6 +68,9 @@ public class CardAdapter extends ArrayAdapter<Card> {
 
         // Assign new data to view holder
         viewHolder.image.setImageDrawable(getItem(position).getImage());
+        viewHolder.dish.setText(getItem(position).getDish());
+        viewHolder.location.setText(getItem(position).getLocation());
+
 
         // Return manipulated view
         return convertView;
