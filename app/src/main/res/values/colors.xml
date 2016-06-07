@@ -5,8 +5,10 @@
     <color name="colorSilver">#c0c0c0</color>
     <color name="colorBorder">#D0D0D0</color>
 
-    <color name="colorPrimaryText">#000000</color>
-    <color name="colorSecondaryText">#777777</color>
+    <color name="colorTextPrimary">#DE000000</color>
+    <color name="colorTextSecondary">#8A000000</color>
+    <color name="colorTextDisabled">#61000000</color>
+
 
     <!--color name="colorPrimary">#ed830f</color-->
     <color name="colorPrimary">#ed830f</color>
