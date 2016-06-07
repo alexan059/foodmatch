@@ -1,30 +1,16 @@
 package com.fancyfood.foodmatch.activities;
 
-import android.content.Context;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MotionEventCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.Transformation;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.fancyfood.foodmatch.R;
@@ -36,16 +22,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import static android.view.View.OnClickListener;
+import static android.view.View.OnTouchListener;
 
-public class MainActivity extends BaseActivity implements OnClickListener, View.OnTouchListener
+public class MainActivity extends BaseActivity implements OnClickListener, OnTouchListener
 {
-
-    private static final String EXTRA_METHOD = "com.fancyfood.foodmatch.METHOD";
 
     private boolean vibrate = true;
 
     // Rating cards
     private CardAdapter cardAdapter;
+    private String dish;
     private ArrayList<Card> al;
 
     @Override
@@ -67,7 +53,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, View.
 
     }
 
-    public void initFling() {
+    final public void initFling() {
         // Find the Fling Container
         SwipeFlingAdapterView flingContainer = (SwipeFlingAdapterView) findViewById(R.id.rating_cards);
 
@@ -92,10 +78,12 @@ public class MainActivity extends BaseActivity implements OnClickListener, View.
 
                 @Override
                 public void onLeftCardExit(Object dataObject) {
+                    Toast.makeText(getApplicationContext(), "DISLIKE", Toast.LENGTH_SHORT).show();
                 }
 
                 @Override
                 public void onRightCardExit(Object dataObject) {
+                    Toast.makeText(getApplicationContext(), "LIKE", Toast.LENGTH_SHORT).show();
                 }
 
                 @Override
