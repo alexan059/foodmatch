@@ -119,6 +119,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         if (manager.isProviderEnabled(provider)) {
+            //request Position Update with gps
             manager.requestLocationUpdates(provider, 0, 0, listener);
         }
     }
@@ -145,17 +146,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return;
             }
             if (manager.isProviderEnabled(provider)){
+                //try to get Position Update with gps
             manager.requestSingleUpdate(provider,listener, null);
             }
 
         }
         if (origin==null)
         {
-
+            //try to get Position Update with Network_Provider
             manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,0,0, listener);
         }
         if (origin==null)
         {
+            //try to get LastKnownPosition
             Location Loc=manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             setOrigin(new LatLng(Loc.getLatitude(), Loc.getLongitude()));
             setCamera(new LatLng(Loc.getLatitude(), Loc.getLongitude()));
