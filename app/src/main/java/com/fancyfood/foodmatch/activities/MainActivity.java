@@ -1,5 +1,6 @@
 package com.fancyfood.foodmatch.activities;
 
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
@@ -89,6 +90,10 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 @Override
                 public void onRightCardExit(Object dataObject) {
                     Toast.makeText(getApplicationContext(), "LIKE", Toast.LENGTH_SHORT).show();
+                    //get MapsActivity
+                    Intent i=new Intent(MainActivity.this, MapsActivity.class);
+                    //StartMapsActivity
+                    startActivity(i);
                 }
 
                 @Override
