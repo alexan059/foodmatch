@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.fancyfood.foodmatch.R;
 import com.fancyfood.foodmatch.adapters.CardAdapter;
 import com.fancyfood.foodmatch.models.Card;
+import com.google.android.gms.maps.model.LatLng;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.util.ArrayList;
@@ -90,8 +91,14 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 @Override
                 public void onRightCardExit(Object dataObject) {
                     Toast.makeText(getApplicationContext(), "LIKE", Toast.LENGTH_SHORT).show();
-                    //get MapsActivity
+                    //Methode to change Activity ->get MapsActivity
                     Intent i=new Intent(MainActivity.this, MapsActivity.class);
+                    //Dummy for passing Data to MapsActivity
+                    //Idea for real data-> LatLng destination =new dataObject.getGeoPos();
+                    LatLng destination = new LatLng(52.523986, 13.402637);
+                    //add data to Intent to use them in MapActivity
+                    i.putExtra("Lat", destination.latitude);
+                    i.putExtra("Lng", destination.longitude);
                     //StartMapsActivity
                     startActivity(i);
                 }

@@ -32,4 +32,5 @@
         </activity>
         <activity android:name=".activities.MapsActivity"/>
     </application>
+
 </manifest>
