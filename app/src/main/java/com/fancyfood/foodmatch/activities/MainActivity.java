@@ -33,8 +33,6 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private boolean vibrate = true;
-
     // Rating cards
     private CardAdapter cardAdapter;
     private String dish;
@@ -57,7 +55,9 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
             btDiscover.setOnTouchListener(this);
             btDiscover.setOnClickListener(this);
             btLike.setOnClickListener(this);
+            btLike.setOnTouchListener(this);
             btDislike.setOnClickListener(this);
+            btDislike.setOnTouchListener(this);
 
             // Note: Since Lollipop buttons always appear in front because of a StateListAnimator.
             // To resolve this we check version Lollipop and above to deactivate this StateListAnimator.
@@ -122,8 +122,6 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 public void onItemClicked(int itemPosition, Object dataObject) {
                 }
             });
-
-            flingContainer.bringToFront();
         }
     }
 
@@ -179,7 +177,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
     public void collapseToolbar() {
         final AppBarLayout appBar = getAppBarLayout();
 
-        // Measures
+        // Measurement
         TypedValue tv = new TypedValue();
         getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true);
 
@@ -223,15 +221,10 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
     public boolean onTouch(View v, MotionEvent event) {
         int action = MotionEventCompat.getActionMasked(event);
 
-        if (action == MotionEvent.ACTION_DOWN && vibrate) {
+        if (action == MotionEvent.ACTION_DOWN) {
             // Feedback on touch down
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-            // Only vibrate once per touch
-            vibrate = false;
         }
-
-        // Reactivate vibration after release
-        vibrate = (action == MotionEvent.ACTION_UP);
 
         return false;
     }
