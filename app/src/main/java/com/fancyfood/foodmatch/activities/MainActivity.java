@@ -1,16 +1,20 @@
 package com.fancyfood.foodmatch.activities;
 
 import android.graphics.drawable.Drawable;
+import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.fancyfood.foodmatch.R;
@@ -26,6 +30,8 @@ import static android.view.View.OnTouchListener;
 
 public class MainActivity extends BaseActivity implements OnClickListener, OnTouchListener
 {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private boolean vibrate = true;
 
@@ -52,6 +58,13 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
             btDiscover.setOnClickListener(this);
             btLike.setOnClickListener(this);
             btDislike.setOnClickListener(this);
+
+            // Note: Since Lollipop buttons always appear in front because of a StateListAnimator.
+            // To resolve this we check version Lollipop and above to deactivate this StateListAnimator.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                btLike.setStateListAnimator(null);
+                btDislike.setStateListAnimator(null);
+            }
         }
 
         initFling();
@@ -109,6 +122,8 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 public void onItemClicked(int itemPosition, Object dataObject) {
                 }
             });
+
+            flingContainer.bringToFront();
         }
     }
 
@@ -192,6 +207,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 if (verticalOffset == -(finalHeight)) {
                     appBarParams.height = toolbarHeight;
                     appBarLayout.requestLayout();
+                    appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
                 }
 
                 // Fade out intro content
