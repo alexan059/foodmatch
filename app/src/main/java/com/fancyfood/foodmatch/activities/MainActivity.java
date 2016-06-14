@@ -2,16 +2,20 @@ package com.fancyfood.foodmatch.activities;
 
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.fancyfood.foodmatch.R;
@@ -29,7 +33,7 @@ import static android.view.View.OnTouchListener;
 public class MainActivity extends BaseActivity implements OnClickListener, OnTouchListener
 {
 
-    private boolean vibrate = true;
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     // Rating cards
     private CardAdapter cardAdapter;
@@ -53,7 +57,16 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
             btDiscover.setOnTouchListener(this);
             btDiscover.setOnClickListener(this);
             btLike.setOnClickListener(this);
+            btLike.setOnTouchListener(this);
             btDislike.setOnClickListener(this);
+            btDislike.setOnTouchListener(this);
+
+            // Note: Since Lollipop buttons always appear in front because of a StateListAnimator.
+            // To resolve this we check version Lollipop and above to deactivate this StateListAnimator.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                btLike.setStateListAnimator(null);
+                btDislike.setStateListAnimator(null);
+            }
         }
 
         initFling();
@@ -176,7 +189,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
     public void collapseToolbar() {
         final AppBarLayout appBar = getAppBarLayout();
 
-        // Measures
+        // Measurement
         TypedValue tv = new TypedValue();
         getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true);
 
@@ -204,6 +217,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 if (verticalOffset == -(finalHeight)) {
                     appBarParams.height = toolbarHeight;
                     appBarLayout.requestLayout();
+                    appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
                 }
 
                 // Fade out intro content
@@ -219,15 +233,10 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
     public boolean onTouch(View v, MotionEvent event) {
         int action = MotionEventCompat.getActionMasked(event);
 
-        if (action == MotionEvent.ACTION_DOWN && vibrate) {
+        if (action == MotionEvent.ACTION_DOWN) {
             // Feedback on touch down
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-            // Only vibrate once per touch
-            vibrate = false;
         }
-
-        // Reactivate vibration after release
-        vibrate = (action == MotionEvent.ACTION_UP);
 
         return false;
     }

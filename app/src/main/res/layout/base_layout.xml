@@ -85,8 +85,24 @@
                     android:minHeight="?attr/actionBarSize"
                     app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
                     app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-                    app:layout_scrollFlags="scroll|enterAlways"
-                    app:layout_collapseMode="pin"/>
+                    app:layout_collapseMode="pin">
+                    <LinearLayout
+                        android:id="@+id/toolbar_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:alpha="0">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:text="@string/app_name"
+                            android:layout_gravity="center"
+                            android:gravity="center_vertical"
+                            android:textSize="20sp"
+                            android:textColor="#FFFFFF" />
+                    </LinearLayout>
+
+                </android.support.v7.widget.Toolbar>
             </android.support.design.widget.CollapsingToolbarLayout>
 
         </android.support.design.widget.AppBarLayout>

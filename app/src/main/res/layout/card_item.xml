@@ -66,18 +66,29 @@
                 android:textSize="12sp"
                 android:textColor="@color/colorTextSecondary"/>
 
-            <TextView
+            <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="$$"
                 android:id="@+id/tvPricing"
-                android:layout_alignWithParentIfMissing="false"
-                android:textSize="20sp"
-                android:textColor="@color/colorTextDisabled"
-                android:layout_alignBottom="@+id/tvLocation"
-                android:layout_marginBottom="5dp"
+                android:src="@drawable/dollar"
                 android:layout_marginRight="15dp"
-                android:layout_alignParentRight="true" />
+                android:layout_alignParentRight="true"
+                android:alpha=".4"
+                android:layout_alignTop="@+id/tvDistance"
+                android:layout_alignBottom="@+id/tvDistance"
+                android:layout_alignLeft="@+id/item_swipe_right_indicator"
+                android:layout_alignStart="@+id/item_swipe_right_indicator"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp" />
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/dollar"
+                android:alpha=".4"
+                android:layout_toLeftOf="@+id/tvPricing"
+                android:layout_marginRight="-10dp"
+                android:layout_alignTop="@+id/tvPricing"
+                android:layout_alignBottom="@+id/tvPricing" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -93,14 +104,17 @@
                 android:layout_marginRight="15dp" />
 
             <ImageView
-                android:layout_width="wrap_content"
+                android:layout_width="16dp"
                 android:layout_height="wrap_content"
                 android:id="@+id/imageView2"
                 android:layout_alignBottom="@+id/tvLocation"
                 android:layout_toLeftOf="@+id/tvDistance"
-                android:src="@drawable/ic_place"
-                android:layout_marginBottom="6dp"
-                android:layout_marginRight="2dp" />
+                android:src="@drawable/place"
+                android:layout_marginBottom="0dp"
+                android:layout_marginRight="4dp"
+                android:layout_alignTop="@+id/tvDish"
+                android:layout_marginTop="2dp"
+                android:alpha=".4" />
         </RelativeLayout>
 
 
