@@ -2,20 +2,17 @@ package com.fancyfood.foodmatch.activities;
 
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MotionEventCompat;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.fancyfood.foodmatch.R;
@@ -104,16 +101,10 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 @Override
                 public void onRightCardExit(Object dataObject) {
                     Toast.makeText(getApplicationContext(), "LIKE", Toast.LENGTH_SHORT).show();
-                    //Methode to change Activity ->get MapsActivity
-                    Intent i=new Intent(MainActivity.this, MapsActivity.class);
-                    //Dummy for passing Data to MapsActivity
-                    //Idea for real data-> LatLng destination =new dataObject.getGeoPos();
-                    LatLng destination = new LatLng(52.523986, 13.402637);
-                    //add data to Intent to use them in MapActivity
-                    i.putExtra("Lat", destination.latitude);
-                    i.putExtra("Lng", destination.longitude);
-                    //StartMapsActivity
-                    startActivity(i);
+
+                    sendDestination();                                                              //send Destination values and start MapsActivity
+
+
                 }
 
                 @Override
@@ -126,6 +117,10 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 @Override
                 public void onScroll(float v) {
                 }
+
+
+
+
             });
 
             // Optionally add an OnItemClickListener
@@ -239,5 +234,18 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         }
 
         return false;
+    }
+
+    public void sendDestination() {
+
+        Intent i=new Intent(MainActivity.this, MapsActivity.class);                         //Methode to change Activity ->get MapsActivity
+
+        LatLng destination = new LatLng(52.523986, 13.402637);                              // Dummy for passing Data to MapsActivity
+        //Idea for real data-> LatLng destination =new dataObject.getGeoPos();
+        i.putExtra("Lat", destination.latitude);                                            //add data to Intent to use them in MapActivity
+        i.putExtra("Lng", destination.longitude);
+
+        startActivity(i);                                                                   //StartMapsActivity
+
     }
 }

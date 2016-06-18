@@ -1,6 +1,7 @@
 package com.fancyfood.foodmatch.activities;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -11,6 +12,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.widget.Toast;
 
 import com.akexorcist.googledirection.DirectionCallback;
 import com.akexorcist.googledirection.GoogleDirection;
@@ -20,7 +22,6 @@ import com.akexorcist.googledirection.model.Direction;
 import com.akexorcist.googledirection.model.Step;
 import com.akexorcist.googledirection.util.DirectionConverter;
 import com.fancyfood.foodmatch.R;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -32,22 +33,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionCallback {
-    //server Key for Google Direction API
-    String serverKey = "AIzaSyBd65lCjwNb-1W03t4XZTfqQu9yjUhyssY";
-    //position of start and end address
-    private LatLng origin;
-    //private LatLng destination= new LatLng(52.523986, 13.402637);
-    //focus start position
-    private LatLng camera;// = new LatLng(52.455521, 13.526905);
-    private LocationManager manager;
-    private LocationListener listener;
+
+    String serverKey = "AIzaSyBd65lCjwNb-1W03t4XZTfqQu9yjUhyssY";                                   //server Key for Google Direction API
+    private LatLng origin;                                                                          //position of start address
+    private LatLng camera;                                                                          //focus position
+    private LocationManager manager;                                                                //for getting geo location
+    private LocationListener listener;                                                              //for listening changes of geo location
+    private Location Loc;
     private String provider;
-    public static final String TAG = MapsActivity.class.getSimpleName();
-    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private GoogleMap mMap;                                                                         // Might be null if Google Play services APK is not available.
 
 
     public void setOrigin(LatLng origin) {
         this.origin = origin;
+    }
+
+    public LocationManager getManager() {
+        return this.manager;
+    }
+
+    public LocationListener getListener() {
+        return this.listener;
+    }
+
+    public LatLng getOrigin() {
+        return this.origin;
     }
 
     public void setCamera(LatLng camera) {
@@ -58,27 +68,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        //trigger von onMapReady
-        ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
+
+        ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);            //trigger von onMapReady
+
         Intent DataIntent = getIntent();
-        //get Date from MainActivity
-        LatLng destination = new LatLng(DataIntent.getDoubleExtra("Lat", 0), DataIntent.getDoubleExtra("Lng", 0));
+        LatLng destination = new LatLng(DataIntent.getDoubleExtra("Lat", 0), DataIntent.getDoubleExtra("Lng", 0));  //get Date from MainActivity
 
-        //get StartLocation
-        getCurrentLocation();
+        getCurrentLocation();                                                                                       //get StartLocation
+        requestDirection(destination);                                                                              //call requestDirection for calculation and drawing the route
+    }
 
-        //call requestDirection for calculation and drawing of the route
-        requestDirection(destination);
+    @Override
+    public void onMapReady(GoogleMap mMap) {                                                                        //when map ist ready, show camera position
+        this.mMap = mMap;
+        //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(camera, 14));                                           //set start Position and zoomlevel
     }
 
     public void getCurrentLocation() {
 
-        manager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        manager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);                                 //get available Location_Service
 
         Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        criteria.setPowerRequirement(Criteria.POWER_HIGH);
-        provider = manager.getBestProvider(criteria, true);
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);                                                               //best accuracy
+        criteria.setPowerRequirement(Criteria.POWER_HIGH);                                                          //allow high power consumption
+        provider = manager.getBestProvider(criteria, true); //manager.NETWORK_PROVIDER;                                                         //find the best provider
 
         listener = new LocationListener() {
             @Override
@@ -97,7 +110,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
             @Override
-            public void onLocationChanged(Location location) {
+            public void onLocationChanged(Location location) {                                                          //called when Location checked
                 LatLng origin;
                 if (location != null) {
                     origin = new LatLng(location.getLatitude(), location.getLongitude());
@@ -108,33 +121,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 setCamera(origin);
             }
         };
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        if (manager.isProviderEnabled(provider)) {
-            //request Position Update with gps
-            manager.requestLocationUpdates(provider, 0, 0, listener);
-        }
-    }
-	
-    @Override
-    public void onMapReady(GoogleMap mMap) {
-        this.mMap = mMap;
-		//set start Position and zoomlevel
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(camera, 14));
     }
 
-    public void requestDirection(LatLng destination){
-		//use the Android-GoogleDirectionLibrary option see http://www.akexorcist.com/2015/12/google-direction-library-for-android-en.html
-        if (origin==null)
-        {
+
+    public void requestDirection(LatLng destination) {
+        boolean ErrFlg = false;
+
+        if (manager.isProviderEnabled(provider)) {
+            //try to get Position Update with gps
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
                 //    ActivityCompat#requestPermissions
@@ -145,48 +139,48 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
-            if (manager.isProviderEnabled(provider)){
-                //try to get Position Update with gps
-            manager.requestSingleUpdate(provider,listener, null);
-            }
+            manager.requestLocationUpdates(provider, 0, 0, listener);
 
         }
         if (origin==null)
         {
-            //try to get Position Update with Network_Provider
-            manager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,0,0, listener);
+
+            Loc=manager.getLastKnownLocation(provider);
+            if (Loc!=null) {
+                origin=new LatLng(Loc.getLatitude(), Loc.getLongitude());
+                camera=new LatLng(Loc.getLatitude(), Loc.getLongitude());
+            }else {
+                ErrFlg=true;
+            }
         }
-        if (origin==null)
-        {
-            //try to get LastKnownPosition
-            Location Loc=manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-            setOrigin(new LatLng(Loc.getLatitude(), Loc.getLongitude()));
-            setCamera(new LatLng(Loc.getLatitude(), Loc.getLongitude()));
+        if(origin!=null || !ErrFlg){
+            GoogleDirection.withServerKey(serverKey)
+                    .from(origin)
+                    .to(destination)
+                    .transportMode(TransportMode.TRANSIT)
+                    .execute(this);
+        }else{
+            Toast.makeText(getApplicationContext(), "UPS no GPS", Toast.LENGTH_SHORT).show();
         }
-        GoogleDirection.withServerKey(serverKey)
-                .from(origin)		
-                .to(destination)
-                .transportMode(TransportMode.TRANSIT)
-                .execute(this);
     }
 
     @Override
     public void onDirectionSuccess(Direction direction, String rawBody) {
-		//if connection was sucessful get status from Google Directions
+        //if connection was sucessful get status from Google Directions
         String status = direction.getStatus();
-		//if Status is ok (if round was found)
+        //if Status is ok (if round was found)
         if(status.equals(RequestResult.OK)) {
-			//get arrayList of routepoint
+            //get arrayList of routepoint
             ArrayList<LatLng> sectionPositionList = direction.getRouteList().get(0).getLegList().get(0).getSectionPoint();
-			//draw every route point on the map
+            //draw every route point on the map
             for (LatLng position : sectionPositionList) {
                 mMap.addMarker(new MarkerOptions().position(position));
             }
-			//get Route Steps
+            //get Route Steps
             List<Step> stepList = direction.getRouteList().get(0).getLegList().get(0).getStepList();
-			//create Colors according to step list
+            //create Colors according to step list
             ArrayList<PolylineOptions> polylineOptionList = DirectionConverter.createTransitPolyline(this, stepList, 5, Color.RED, 3, Color.BLUE);
-			//draw route with polylines
+            //draw route with polylines
             for (PolylineOptions polylineOption : polylineOptionList) {
                 mMap.addPolyline(polylineOption);
             }
