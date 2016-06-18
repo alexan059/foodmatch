@@ -22,6 +22,7 @@ import com.akexorcist.googledirection.model.Direction;
 import com.akexorcist.googledirection.model.Step;
 import com.akexorcist.googledirection.util.DirectionConverter;
 import com.fancyfood.foodmatch.R;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -145,7 +146,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (origin==null)
         {
 
-            Loc=manager.getLastKnownLocation(provider);
+            Loc=manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
             if (Loc!=null) {
                 origin=new LatLng(Loc.getLatitude(), Loc.getLongitude());
                 camera=new LatLng(Loc.getLatitude(), Loc.getLongitude());
@@ -166,6 +167,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onDirectionSuccess(Direction direction, String rawBody) {
+
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(camera, 14));
         //if connection was sucessful get status from Google Directions
         String status = direction.getStatus();
         //if Status is ok (if round was found)
