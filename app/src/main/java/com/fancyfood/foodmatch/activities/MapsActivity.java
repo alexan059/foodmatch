@@ -43,27 +43,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location Loc;
     private String provider;
     private GoogleMap mMap;                                                                         // Might be null if Google Play services APK is not available.
+    private LatLng destination;
+    private ArrayList<LatLng> sectionPositionList;
 
 
     public void setOrigin(LatLng origin) {
         this.origin = origin;
     }
-
-    public LocationManager getManager() {
-        return this.manager;
-    }
-
-    public LocationListener getListener() {
-        return this.listener;
-    }
-
     public LatLng getOrigin() {
         return this.origin;
     }
-
+    public LatLng getDestination() {
+        return this.destination;
+    }
+    public ArrayList<LatLng> getSectionPositionList() {return this.sectionPositionList;}
     public void setCamera(LatLng camera) {
         this.camera = camera;
     }
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +71,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);            //trigger von onMapReady
 
         Intent DataIntent = getIntent();
-        LatLng destination = new LatLng(DataIntent.getDoubleExtra("Lat", 0), DataIntent.getDoubleExtra("Lng", 0));  //get Date from MainActivity
+        destination = new LatLng(DataIntent.getDoubleExtra("Lat", 0), DataIntent.getDoubleExtra("Lng", 0));        //get Date from MainActivity
 
         getCurrentLocation();                                                                                       //get StartLocation
         requestDirection(destination);                                                                              //call requestDirection for calculation and drawing the route
@@ -82,7 +80,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap mMap) {                                                                        //when map ist ready, show camera position
         this.mMap = mMap;
-        //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(camera, 14));                                           //set start Position and zoomlevel
     }
 
     public void getCurrentLocation() {
@@ -92,7 +89,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);                                                               //best accuracy
         criteria.setPowerRequirement(Criteria.POWER_HIGH);                                                          //allow high power consumption
-        provider = manager.getBestProvider(criteria, true); //manager.NETWORK_PROVIDER;                                                         //find the best provider
+        provider = manager.getBestProvider(criteria, true);                                                         //find the best provider problem even when GPS is unavailable GPS becomes best provider
 
         listener = new LocationListener() {
             @Override
@@ -122,14 +119,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 setCamera(origin);
             }
         };
+
     }
 
 
     public void requestDirection(LatLng destination) {
         boolean ErrFlg = false;
-
         if (manager.isProviderEnabled(provider)) {
-            //try to get Position Update with gps
+
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
                 //    ActivityCompat#requestPermissions
@@ -140,13 +137,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
-            manager.requestLocationUpdates(provider, 0, 0, listener);
+            //inform me, if the location has changed, if yes
+            //go to onLocationChanged and set the "new" origin
+            manager.requestLocationUpdates(provider, 0, 0, listener);                               //listener: a LocationListener whose onLocationChanged(Location) method will be called for each location update
 
         }
         if (origin==null)
         {
-
-            Loc=manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            Loc = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);                   //second option: get last know location through Internet/WIFI or mobile-data
             if (Loc!=null) {
                 origin=new LatLng(Loc.getLatitude(), Loc.getLongitude());
                 camera=new LatLng(Loc.getLatitude(), Loc.getLongitude());
@@ -155,47 +153,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
         if(origin!=null || !ErrFlg){
-            GoogleDirection.withServerKey(serverKey)
+            GoogleDirection.withServerKey(serverKey)                                                //Send origin and destination to  GoogleDirection, for ROUTE CALCULATION
                     .from(origin)
                     .to(destination)
                     .transportMode(TransportMode.TRANSIT)
                     .execute(this);
         }else{
-            Toast.makeText(getApplicationContext(), "UPS no GPS", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "unknown last location ", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
-    public void onDirectionSuccess(Direction direction, String rawBody) {
+    public void onDirectionSuccess(Direction direction, String rawBody) {                           //Method to DRAW THE ROUTE
 
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(camera, 14));
-        //if connection was sucessful get status from Google Directions
-        String status = direction.getStatus();
-        //if Status is ok (if round was found)
-        if(status.equals(RequestResult.OK)) {
-            //get arrayList of routepoint
-            ArrayList<LatLng> sectionPositionList = direction.getRouteList().get(0).getLegList().get(0).getSectionPoint();
-            //draw every route point on the map
-            for (LatLng position : sectionPositionList) {
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(camera, 14));                          //set start Position and zoomlevel
+        String status = direction.getStatus();                                                      //if connection was successful get status from Google Directions
+
+        if(status.equals(RequestResult.OK)) {                                                       //if Status is ok (if route was found)
+            sectionPositionList = direction.getRouteList().get(0).getLegList().get(0).getSectionPoint(); //get arrayList of route points
+
+            for (LatLng position : sectionPositionList) {                                           //draw every route point on the map
                 mMap.addMarker(new MarkerOptions().position(position));
             }
-            //get Route Steps
-            List<Step> stepList = direction.getRouteList().get(0).getLegList().get(0).getStepList();
-            //create Colors according to step list
+            List<Step> stepList = direction.getRouteList().get(0).getLegList().get(0).getStepList(); //get Route Steps
+                                                                                                     //create Colors according to step list
             ArrayList<PolylineOptions> polylineOptionList = DirectionConverter.createTransitPolyline(this, stepList, 5, Color.RED, 3, Color.BLUE);
-            //draw route with polylines
-            for (PolylineOptions polylineOption : polylineOptionList) {
+
+            for (PolylineOptions polylineOption : polylineOptionList) {                             //draw route with polylines
                 mMap.addPolyline(polylineOption);
             }
         } else if(status.equals(RequestResult.NOT_FOUND)) {
-            // Do something
+            Toast.makeText(getApplicationContext(), "no route found ", Toast.LENGTH_SHORT).show();
         }
-        // Do something here
     }
 
     @Override
     public void onDirectionFailure(Throwable t) {
-        // Do something here
-        int test=1;
+
+        Toast.makeText(getApplicationContext(), "error while calculating route", Toast.LENGTH_SHORT).show();
     }
 }
