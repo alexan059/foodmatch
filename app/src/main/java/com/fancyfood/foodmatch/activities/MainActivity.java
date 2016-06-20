@@ -1,13 +1,20 @@
 package com.fancyfood.foodmatch.activities;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
@@ -18,7 +25,13 @@ import android.widget.Toast;
 import com.fancyfood.foodmatch.R;
 import com.fancyfood.foodmatch.adapters.CardAdapter;
 import com.fancyfood.foodmatch.models.Card;
-import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.util.ArrayList;
@@ -27,16 +40,26 @@ import java.util.Collections;
 import static android.view.View.OnClickListener;
 import static android.view.View.OnTouchListener;
 
-public class MainActivity extends BaseActivity implements OnClickListener, OnTouchListener
-{
+public class MainActivity extends BaseActivity implements OnClickListener, OnTouchListener,
+        ConnectionCallbacks, OnConnectionFailedListener, LocationListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final int MY_PERMISSIONS_COARSE_LOCATIONS = 64;
 
     // Rating cards
     private CardAdapter cardAdapter;
-    private String dish;
     private ArrayList<Card> al;
     private SwipeFlingAdapterView flingContainer;
+
+    // Location client
+    private GoogleApiClient googleApiClient;
+    private static Location currentLocation;
+    private LocationRequest locationRequest;
+
+    // Check flag for intent
+    private boolean flingStarted = false;
+
+    /* Activity lifecycle */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,11 +89,45 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
             }
         }
 
-        initFling();
-
+        // Create instance of GoogleAPIClient
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient
+                    .Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
     }
 
+    @Override
+    protected void onStart() {
+        googleApiClient.connect();
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        stopLocationUpdates();
+        googleApiClient.disconnect();
+        super.onStop();
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        if (googleApiClient.isConnected()) {
+            startLocationUpdates();
+        }
+    }
+
+    /* Helper methods */
+
     final public void initFling() {
+        // Stop if already started or location isn't ready
+        if (flingStarted || currentLocation == null)
+            return;
+
         // Find the Fling Container
         flingContainer = (SwipeFlingAdapterView) findViewById(R.id.rating_cards);
 
@@ -89,22 +146,29 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
             flingContainer.setFlingListener(new SwipeFlingAdapterView.onFlingListener() {
                 @Override
                 public void removeFirstObjectInAdapter() {
-                    al.remove(0); // Remove first
+                    al.remove(0); // Remove first object in adapter
                     cardAdapter.notifyDataSetChanged();
                 }
 
                 @Override
                 public void onLeftCardExit(Object dataObject) {
-                    Toast.makeText(getApplicationContext(), "DISLIKE", Toast.LENGTH_SHORT).show();
+                    // Item disliked
                 }
 
                 @Override
                 public void onRightCardExit(Object dataObject) {
+                    // Item liked
+
+                    // Method to change Activity ->get MapsActivity
+                    Intent i = new Intent(MainActivity.this, MapsActivity.class);
+
+                    // Add data to Intent to use them in MapActivity
+                    i.putExtra("Lat", currentLocation.getLatitude());
+                    i.putExtra("Lng", currentLocation.getLongitude());
+
+                    // StartMapsActivity
+                    startActivity(i);
                     Toast.makeText(getApplicationContext(), "LIKE", Toast.LENGTH_SHORT).show();
-
-                    sendDestination();                                                              //send Destination values and start MapsActivity
-
-
                 }
 
                 @Override
@@ -117,10 +181,6 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 @Override
                 public void onScroll(float v) {
                 }
-
-
-
-
             });
 
             // Optionally add an OnItemClickListener
@@ -129,8 +189,60 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 public void onItemClicked(int itemPosition, Object dataObject) {
                 }
             });
+
+            flingStarted = true;
+
         }
     }
+
+    public void collapseToolbar() {
+        final AppBarLayout appBar = getAppBarLayout();
+
+        // Measurement
+        TypedValue tv = new TypedValue();
+        getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true);
+
+        final int initialHeight = appBar.getHeight();
+        final int toolbarHeight = getResources().getDimensionPixelSize(tv.resourceId);
+        final int finalHeight = initialHeight - toolbarHeight;
+
+        // Make toolbar collapsible
+        AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) getCollapsingToolbar().getLayoutParams();
+        params.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL | AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED);
+        getCollapsingToolbar().setLayoutParams(params);
+
+        // Fling toolbar after a few milliseconds
+        final CoordinatorLayout.LayoutParams appBarParams = (CoordinatorLayout.LayoutParams) appBar.getLayoutParams();
+        final AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) appBarParams.getBehavior();
+        new android.os.Handler().postDelayed(new Runnable() {
+            public void run() {
+                behavior.onNestedFling((CoordinatorLayout) findViewById(R.id.coordinator_layout), appBar, null, 0, 9000, false);
+            }
+        }, 1);
+
+        // Listen for toolbar fling
+        appBar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                // Disable collapsing toolbar
+                if (verticalOffset == -(finalHeight)) {
+                    appBarParams.height = toolbarHeight;
+                    appBarLayout.requestLayout();
+                    appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
+
+                    initFling();
+                }
+
+                // Fade out intro content
+                if (verticalOffset == 0) {
+                    appBarLayout.findViewById(R.id.introImage).animate().alpha(0).setDuration(400);
+                    appBarLayout.findViewById(R.id.introLayout).animate().alpha(0).setDuration(400);
+                }
+            }
+        });
+    }
+
+    /* Dummy data */
 
     /**
      * Short version to get drawable from resource id.
@@ -161,6 +273,8 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         }
     }
 
+    /* On touch and on click listener */
+
     @Override
     public void onClick(View v) {
 
@@ -181,49 +295,6 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
     }
 
-    public void collapseToolbar() {
-        final AppBarLayout appBar = getAppBarLayout();
-
-        // Measurement
-        TypedValue tv = new TypedValue();
-        getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true);
-
-        final int initialHeight = appBar.getHeight();
-        final int toolbarHeight = getResources().getDimensionPixelSize(tv.resourceId);
-        final int finalHeight = initialHeight - toolbarHeight;
-
-        // Make toolbar collapsible
-        AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) getCollapsingToolbar().getLayoutParams();
-        params.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL|AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED);
-        getCollapsingToolbar().setLayoutParams(params);
-
-        // Fling toolbar after a few milliseconds
-        final CoordinatorLayout.LayoutParams appBarParams = (CoordinatorLayout.LayoutParams) appBar.getLayoutParams();
-        final AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) appBarParams.getBehavior();
-        new android.os.Handler().postDelayed(new Runnable() {public void run() {
-            behavior.onNestedFling((CoordinatorLayout) findViewById(R.id.coordinator_layout), appBar, null, 0, 9000, false);
-        }}, 1);
-
-        // Listen for toolbar fling
-        appBar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                // Disable collapsing toolbar
-                if (verticalOffset == -(finalHeight)) {
-                    appBarParams.height = toolbarHeight;
-                    appBarLayout.requestLayout();
-                    appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
-                }
-
-                // Fade out intro content
-                if (verticalOffset == 0) {
-                    appBarLayout.findViewById(R.id.introImage).animate().alpha(0).setDuration(400);
-                    appBarLayout.findViewById(R.id.introLayout).animate().alpha(0).setDuration(400);
-                }
-            }
-        });
-    }
-
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         int action = MotionEventCompat.getActionMasked(event);
@@ -236,16 +307,63 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         return false;
     }
 
-    public void sendDestination() {
+    /* Location Helper */
 
-        Intent i=new Intent(MainActivity.this, MapsActivity.class);                         //Methode to change Activity ->get MapsActivity
+    protected void createLocationRequests() {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+    }
 
-        LatLng destination = new LatLng(52.523986, 13.402637);                              // Dummy for passing Data to MapsActivity
-        //Idea for real data-> LatLng destination =new dataObject.getGeoPos();
-        i.putExtra("Lat", destination.latitude);                                            //add data to Intent to use them in MapActivity
-        i.putExtra("Lng", destination.longitude);
+    protected void startLocationUpdates() {
+        // API 23+ Check explicitly for granted permissions or retrieve them
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+           ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, MY_PERMISSIONS_COARSE_LOCATIONS);
+        }
+        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
+    }
 
-        startActivity(i);                                                                   //StartMapsActivity
+    protected void stopLocationUpdates() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+    }
 
+    /* Google Api Client */
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        // API 23+ Check explicitly for granted permissions or retrieve them
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, MY_PERMISSIONS_COARSE_LOCATIONS);
+        }
+
+        // Get last location and store it
+        currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
+        // Show values of last location
+        if (currentLocation != null) {
+            initFling();
+            // Update something
+        }
+
+        createLocationRequests();
+        startLocationUpdates();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        currentLocation = location;
+        Log.d(TAG, "lat: " + Double.toString(currentLocation.getLatitude()) + " lng: " + Double.toString(currentLocation.getLongitude()));
+        initFling();
     }
 }
