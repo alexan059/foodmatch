@@ -14,7 +14,7 @@ public class LikeDbHelper extends SQLiteOpenHelper {
 
     private static final String LOG_TAG = LikeDbHelper.class.getSimpleName();
 
-    public static final String DB_NAME = "like.db";
+    public static final String DB_NAME = "favorites.db";
     public static final int DB_VERSION = 1;
 
     public static final String TABLE_LIKES = "likes";
@@ -26,9 +26,9 @@ public class LikeDbHelper extends SQLiteOpenHelper {
 
     public static final String SQL_CREATE =
             "CREATE TABLE " + TABLE_LIKES +
-                    "(" + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    COLUMN_DISH + " TEXT NOT NULL, " +
-                    COLUMN_LOCATION + " TEXT NOT NULL);";
+                        "(" + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                            + COLUMN_DISH + " TEXT NOT NULL, "
+                            + COLUMN_LOCATION + " TEXT NOT NULL);";
 
 
     public LikeDbHelper(Context context) {                                                          //Create Database

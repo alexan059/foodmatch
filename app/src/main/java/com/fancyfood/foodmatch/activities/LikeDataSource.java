@@ -73,7 +73,7 @@ public class LikeDataSource {
         while(!cursor.isAfterLast()) {
             cardMemo = cursorToCardMemo(cursor);
             cardMemoList.add(cardMemo);
-            Log.d(LOG_TAG, "Inhalt: " + cardMemo.toString());
+            Log.d(LOG_TAG, "Gericht: " + cardMemo.getDish() + " Location: "+ cardMemo.getLocation());
             cursor.moveToNext();
         }
 

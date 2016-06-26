@@ -36,6 +36,7 @@ import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static android.view.View.OnClickListener;
 import static android.view.View.OnTouchListener;
@@ -171,9 +172,15 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                     String dish = currentCard.getDish();
                     String location = currentCard.getLocation();
 
-                    dataSource.createCard(dish,location);                                           //write data to database
-                    //Log.d(LOG_TAG, "Die Datenquelle wird geschlossen.");
-                    //dataSource.close();
+                    Card cardMemo = dataSource.createCard(dish, location);                           //write data to database
+                    //dataSource.createCard(dish,location);
+
+                    //only for testing purposes
+                    Log.d(LOG_TAG, "Es wurde der folgende Eintrag in die Datenbank geschrieben:");
+					Log.d(LOG_TAG, "Gericht: " + cardMemo.getDish() + " Location: "+ cardMemo.getLocation());
+                    //testing getting all elements from database
+                    List<Card> InhaltDB=dataSource.getAllCardMemos();
+                    Log.d(LOG_TAG, "number of element in the DB: " + InhaltDB.size());
                     //---------------------------------------------------------------------------------------------------------------------------------------------------
 
                     // Method to change Activity ->get MapsActivity
@@ -391,5 +398,12 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         Log.d(LOG_TAG, "Die Datenquelle wird geschlossen.");
         dataSource.close();
     }
+    @Override
+    protected void onResume(){
+        Log.d(LOG_TAG, "Die Datenquelle wird wieder geöffnet.");                                    //when from MapsActivity back to MainActivity
+        super.onResume();
 
+        dataSource.open();
+
+    }
 }
