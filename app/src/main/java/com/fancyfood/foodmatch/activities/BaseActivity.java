@@ -8,6 +8,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -22,6 +23,8 @@ import com.fancyfood.foodmatch.R;
  */
 public class BaseActivity extends AppCompatActivity {
 
+    public static final String LOG_TAG = BaseActivity.class.getSimpleName();
+    private LikeDataSource dataSource;
     private DrawerLayout drawerLayout;
     private FrameLayout contentFrame;
     private CollapsingToolbarLayout collapsingToolbar;
@@ -40,6 +43,17 @@ public class BaseActivity extends AppCompatActivity {
         collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
 
         initToolbarAndMenu();
+
+        dataSource = new LikeDataSource(this);
+
+        Log.d(LOG_TAG, "Die Datenquelle wird geöffnet.");
+        dataSource.open();
+
+
+
+        //Log.d(LOG_TAG, "Die Datenquelle wird geschlossen.");
+        //dataSource.close();
+
     }
 
     /**
@@ -62,7 +76,7 @@ public class BaseActivity extends AppCompatActivity {
         ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open_toolbar_text, R.string.close_toolbar_text);
         drawerLayout.addDrawerListener(drawerToggle);
 
-        String[] navigationItems = {"Option A", "Option B"};
+        String[] navigationItems = {"Option A", "Option B", "Favoriten"};
         drawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, navigationItems));
 
     }

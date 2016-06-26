@@ -50,6 +50,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
     private CardAdapter cardAdapter;
     private ArrayList<Card> al;
     private SwipeFlingAdapterView flingContainer;
+    private LikeDataSource dataSource;
 
     // Location client
     private GoogleApiClient googleApiClient;
@@ -70,6 +71,10 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         Button btDiscover = (Button) findViewById(R.id.btDiscover);
         Button btLike = (Button) findViewById(R.id.btLike);
         Button btDislike = (Button) findViewById(R.id.btDislike);
+        dataSource = new LikeDataSource(this);                                                      //object for database management
+        Log.d(LOG_TAG, "Die Datenquelle wird geöffnet.");                                           //open  database
+        dataSource.open();
+
 
         if (btHungry != null && btDiscover != null && btLike != null && btDislike != null) {
             btHungry.setOnTouchListener(this);
@@ -158,17 +163,28 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 @Override
                 public void onRightCardExit(Object dataObject) {
                     // Item liked
+                    Toast.makeText(getApplicationContext(), "LIKE", Toast.LENGTH_SHORT).show();
+
+                    //--------------------------------------------------------------------------------------------------------------------------------------------------
+                    //FOR DATABASE
+                    Card currentCard=(Card) dataObject;                                             //Cast dataObject to Card to use get and set methods
+                    String dish = currentCard.getDish();
+                    String location = currentCard.getLocation();
+
+                    dataSource.createCard(dish,location);                                           //write data to database
+                    //Log.d(LOG_TAG, "Die Datenquelle wird geschlossen.");
+                    //dataSource.close();
+                    //---------------------------------------------------------------------------------------------------------------------------------------------------
 
                     // Method to change Activity ->get MapsActivity
                     Intent i = new Intent(MainActivity.this, MapsActivity.class);
-
                     // Add data to Intent to use them in MapActivity
                     i.putExtra("Lat", currentLocation.getLatitude());
                     i.putExtra("Lng", currentLocation.getLongitude());
 
                     // StartMapsActivity
                     startActivity(i);
-                    Toast.makeText(getApplicationContext(), "LIKE", Toast.LENGTH_SHORT).show();
+
                 }
 
                 @Override
@@ -270,6 +286,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
             //shuffle List for randomize picture order
             Collections.shuffle(al);
+
         }
     }
 
@@ -366,4 +383,13 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         Log.d(TAG, "lat: " + Double.toString(currentLocation.getLatitude()) + " lng: " + Double.toString(currentLocation.getLongitude()));
         initFling();
     }
+
+    @Override
+    protected void onPause() {                                                                      //close Database when MainActivity pause
+        super.onPause();
+
+        Log.d(LOG_TAG, "Die Datenquelle wird geschlossen.");
+        dataSource.close();
+    }
+
 }

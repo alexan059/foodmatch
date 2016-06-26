@@ -50,13 +50,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void setOrigin(LatLng origin) {
         this.origin = origin;
     }
-    public LatLng getOrigin() {
+    public LatLng getOrigin() {                                                                     //only for testing purposes
         return this.origin;
     }
-    public LatLng getDestination() {
+    public LatLng getDestination() {                                                                //only for testing purposes
         return this.destination;
     }
-    public ArrayList<LatLng> getSectionPositionList() {return this.sectionPositionList;}
+    public ArrayList<LatLng> getSectionPositionList() {                                             //only for testing purposes
+        return this.sectionPositionList;
+    }
     public void setCamera(LatLng camera) {
         this.camera = camera;
     }
@@ -78,7 +80,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    public void onMapReady(GoogleMap mMap) {                                                                        //when map ist ready, show camera position
+    public void onMapReady(GoogleMap mMap) {                                                                        //method to access the map
         this.mMap = mMap;
     }
 
