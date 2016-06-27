@@ -1,7 +1,6 @@
 package com.fancyfood.foodmatch.activities;
 
 import android.Manifest;
-import android.app.DialogFragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -13,7 +12,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.NavigationView;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -28,7 +26,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.fancyfood.foodmatch.R;
@@ -207,6 +204,13 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 @Override
                 public void onLeftCardExit(Object dataObject) {
                     // Item disliked
+                    Card currentCard=(Card) dataObject;
+                    String dish = currentCard.getDish();
+                    boolean like = false;
+
+
+                    Card cardMemo = dataSource.createCard(dish, like);
+
                 }
 
                 @Override
@@ -218,15 +222,16 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                         //Cast dataObject to Card to use get and set methods
                         Card currentCard=(Card) dataObject;
                         String dish = currentCard.getDish();
-                        String location = currentCard.getLocation();
+                        boolean like = true;
+
 
                         //write data to database
-                        Card cardMemo = dataSource.createCard(dish, location);
+                        Card cardMemo = dataSource.createCard(dish, like);
                         //dataSource.createCard(dish,location);
 
                         //only for testing purposes
                         Log.d(TAG, "Es wurde der folgende Eintrag in die Datenbank geschrieben:");
-                        Log.d(TAG, "Gericht: " + cardMemo.getDish() + " Location: "+ cardMemo.getLocation());
+                        Log.d(TAG, "Gericht: " + cardMemo.getDish());
                         //testing getting all elements from database
                         List<Card> InhaltDB=dataSource.getAllCardMemos();
                         Log.d(TAG, "number of element in the DB: " + InhaltDB.size());
