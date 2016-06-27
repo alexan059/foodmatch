@@ -1,4 +1,4 @@
-package com.fancyfood.foodmatch.activities;
+package com.fancyfood.foodmatch.data.migrations;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -10,33 +10,33 @@ import android.util.Log;
  */
 
 
-public class LikeDbHelper extends SQLiteOpenHelper {
+public class RatingDbHelper extends SQLiteOpenHelper {
 
-    private static final String LOG_TAG = LikeDbHelper.class.getSimpleName();
+    private static final String LOG_TAG = RatingDbHelper.class.getSimpleName();
 
-    public static final String DB_NAME = "likedislike.db";
+    public static final String DB_NAME = "foodmatch.db";
     public static final int DB_VERSION = 1;
 
-    public static final String TABLE_LIKES = "LikeDislike";
+    public static final String TABLE_RATINGS = "ratings";
 
     public static final String COLUMN_ID = "_id";
-    public static final String COLUMN_DISH = "dish";
-    public static final String COLUMN_LIKE = "like";
-    public static final String COLUMN_TIME = "timestamp";
+    public static final String COLUMN_DISH_ID = "dish_id";
+    public static final String COLUMN_RATING = "rating";
+    public static final String COLUMN_TIME = "created_at";
 
 
     public static final String SQL_CREATE =
-            "CREATE TABLE " + TABLE_LIKES +
+            "CREATE TABLE " + TABLE_RATINGS +
                         "(" + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                            + COLUMN_DISH + " TEXT NOT NULL, "
-                            + COLUMN_LIKE + " INTEGER NOT NULL, "
-                            + COLUMN_TIME + " TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL);";
+                            + COLUMN_DISH_ID + " VARCHAR(255) NOT NULL, "
+                            + COLUMN_RATING + " TINYINT(1) NOT NULL, "
+                            + COLUMN_TIME + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);";
 
 
-    public LikeDbHelper(Context context) {                                                          //Create Database
-
+    public RatingDbHelper(Context context) {                                                          //Create Database
         super(context, DB_NAME, null, DB_VERSION);
         Log.d(LOG_TAG, "DbHelper hat die Datenbank: " + getDatabaseName() + " erzeugt.");
+        context.deleteDatabase(DB_NAME);
     }
 
 
@@ -55,6 +55,5 @@ public class LikeDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
     }
 }

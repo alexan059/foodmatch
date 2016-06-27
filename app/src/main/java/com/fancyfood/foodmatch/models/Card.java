@@ -2,6 +2,7 @@ package com.fancyfood.foodmatch.models;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.support.v4.content.ContextCompat;
 
 /**
@@ -9,13 +10,20 @@ import android.support.v4.content.ContextCompat;
  */
 public class Card {
 
+    // For Displaying Card
     private Drawable image;
     private String dish;
     private String location;
     private double distance;
     private int pricing;
 
-    public Card(Drawable image, String dish, String location, double distance, int pricing) {
+    // Attached information
+    private Location position;
+    private String _id;
+
+    public Card(String _id, Location position, Drawable image, String dish, String location, double distance, int pricing) {
+        this._id = _id;
+        this.position = position;
         this.image = image;
         this.dish = dish;
         this.location = location;
@@ -23,7 +31,9 @@ public class Card {
         this.pricing = pricing;
     }
 
-    public Card(Context context, int imageId, String dish, String location, double distance, int pricing) {
+    public Card(String _id, Location position, Context context, int imageId, String dish, String location, double distance, int pricing) {
+        this._id = _id;
+        this.position = position;
         this.image = ContextCompat.getDrawable(context, imageId);
         this.dish = dish;
         this.location = location;
@@ -38,6 +48,22 @@ public class Card {
         }
 
         return str;
+    }
+
+    public Location getPosition() {
+        return position;
+    }
+
+    public void setPosition(Location position) {
+        this.position = position;
+    }
+
+    public String getID() {
+        return _id;
+    }
+
+    public void setID(String _id) {
+        this._id = _id;
     }
 
     public String getDish() {

@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -26,12 +27,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.fancyfood.foodmatch.R;
 import com.fancyfood.foodmatch.adapters.CardAdapter;
+import com.fancyfood.foodmatch.data.RatingDataSource;
 import com.fancyfood.foodmatch.fragments.RadiusDialogFragment;
 import com.fancyfood.foodmatch.models.Card;
+import com.fancyfood.foodmatch.models.CardRating;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
@@ -41,6 +45,8 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +58,10 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         ConnectionCallbacks, OnConnectionFailedListener, LocationListener, OnCheckedChangeListener,
         OnNavigationItemSelectedListener, RadiusDialogFragment.RadiusDialogListener {
 
+    // Debug Tag
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    // App Constants
     private static final int MY_PERMISSIONS_COARSE_LOCATIONS = 64;
 
     // Shared Preferences
@@ -63,12 +72,13 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
     // Views
     private SwitchCompat modeSwitch;
+    private ProgressBar progressBar;
 
     // Rating cards
     private CardAdapter cardAdapter;
     private ArrayList<Card> al;
     private SwipeFlingAdapterView flingContainer;
-    private LikeDataSource dataSource;
+    private RatingDataSource dataSource;
 
     // Location client
     private GoogleApiClient googleApiClient;
@@ -111,11 +121,13 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
         // Restore preferences
         SharedPreferences settings = getSharedPreferences(FM_PREFS, 0);
-        int radius = settings.getInt("foodRadius", DEF_RADIUS);
-        setRadius(radius);
+        radius = settings.getInt("foodRadius", DEF_RADIUS);
+
+        // Progress bar
+        progressBar = (ProgressBar) findViewById(R.id.progress_bar);
 
         // Init Database
-        dataSource = new LikeDataSource(this);
+        dataSource = new RatingDataSource(this);
         Log.d(TAG, "Die Datenquelle wird geöffnet.");
         dataSource.open();
     }
@@ -136,7 +148,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         SharedPreferences settings = getSharedPreferences(FM_PREFS, 0);
         SharedPreferences.Editor editor = settings.edit();
         editor.putInt("foodRadius", radius);
-        editor.commit();
+        editor.apply();
     }
 
     @Override
@@ -147,7 +159,32 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         }
     }
 
+    /* Async Task */
+
+    public class LoadCardsTask extends AsyncTask<String, String, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            while (currentLocation == null) {
+                // Nop
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            initFling();
+            displayUI();
+            progressBar.setVisibility(View.INVISIBLE);
+        }
+    }
+
     /* Helper methods */
+
+    private void initTasks() {
+        LoadCardsTask task = new LoadCardsTask();
+        task.execute();
+    }
 
     public void initButtons() {
         final Button btHungry = (Button) findViewById(R.id.btHungry);
@@ -204,45 +241,26 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 @Override
                 public void onLeftCardExit(Object dataObject) {
                     // Item disliked
-                    Card currentCard=(Card) dataObject;
-                    String dish = currentCard.getDish();
-                    boolean like = false;
-
-
-                    Card cardMemo = dataSource.createCard(dish, like);
-
+                    Card currentCard = (Card) dataObject;
+                    insertLike(currentCard, false);
                 }
 
                 @Override
                 public void onRightCardExit(Object dataObject) {
                     // Item liked
+                    Card currentCard = (Card) dataObject;
+                    insertLike(currentCard, true);
+
                     if (eatMode) {
-                        //--------------------------------------------------------------------------
-                        //FOR DATABASE
-                        //Cast dataObject to Card to use get and set methods
-                        Card currentCard=(Card) dataObject;
-                        String dish = currentCard.getDish();
-                        boolean like = true;
-
-
-                        //write data to database
-                        Card cardMemo = dataSource.createCard(dish, like);
-                        //dataSource.createCard(dish,location);
-
-                        //only for testing purposes
-                        Log.d(TAG, "Es wurde der folgende Eintrag in die Datenbank geschrieben:");
-                        Log.d(TAG, "Gericht: " + cardMemo.getDish());
-                        //testing getting all elements from database
-                        List<Card> InhaltDB=dataSource.getAllCardMemos();
-                        Log.d(TAG, "number of element in the DB: " + InhaltDB.size());
-                        //--------------------------------------------------------------------------
-
                         // Method to change Activity ->get MapsActivity
                         Intent i = new Intent(MainActivity.this, MapsActivity.class);
 
+                        double lat = currentCard.getPosition().getLatitude();
+                        double lng = currentCard.getPosition().getLongitude();
+
                         // Add data to Intent to use them in MapActivity
-                        i.putExtra("Lat", currentLocation.getLatitude());
-                        i.putExtra("Lng", currentLocation.getLongitude());
+                        i.putExtra("Lat", lat);
+                        i.putExtra("Lng", lng);
 
                         // StartMapsActivity
                         startActivity(i);
@@ -308,7 +326,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                     appBarLayout.requestLayout();
                     appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
 
-                    initFling();
+                    initTasks();
                 }
 
                 // Fade out intro content
@@ -320,10 +338,38 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         });
     }
 
-    /* Getter and Setter */
+    private void insertLike(Card card, boolean rating) {
+        //--------------------------------------------------------------------------
+        //FOR DATABASE
+        //Cast dataObject to Card to use get and set methods
+        String dishID = card.getID();
 
-    public void setRadius(int radius) {
-        this.radius = radius;
+        //write data to database
+        CardRating ratingMemo = dataSource.createRating(dishID, rating);
+
+        //only for testing purposes
+        Log.d(TAG, "Es wurde der folgende Eintrag in die Datenbank geschrieben:");
+        Log.d(TAG, "Gericht: " + ratingMemo.getID());
+        //testing getting all elements from database
+        List<CardRating> InhaltDB = dataSource.getAllRatingMemos();
+        Log.d(TAG, "number of element in the DB: " + InhaltDB.size());
+        //--------------------------------------------------------------------------
+    }
+
+    /* View Helper */
+
+    private void displayUI() {
+        flingContainer.setVisibility(View.VISIBLE);
+        flingContainer.animate().alpha(1).setDuration(200);
+
+        Button btLike = (Button) findViewById(R.id.btLike);
+        Button btDislike = (Button) findViewById(R.id.btDislike);
+        btLike.setVisibility(View.VISIBLE);
+        btLike.animate().alpha(1).setDuration(200);
+        btDislike.setVisibility(View.VISIBLE);
+        btDislike.animate().alpha(1).setDuration(200);
+
+        flingContainer.requestLayout();
     }
 
     /* Dummy data */
@@ -343,18 +389,43 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
      */
     public void addDummy() {
         if (al != null) {
-            al.add(new Card(getSupportDrawable(R.drawable.currywurst), "Currywurst", "Curry 36 - Kreuzberg", 1050.5, 1));
-            al.add(new Card(getSupportDrawable(R.drawable.fishnchips), "Fish'n'Chips", "Nordsee - Alexa", 440, 1));
-            al.add(new Card(getSupportDrawable(R.drawable.hamburger), "Hamburger", "Kreuzburger - Prenzlauer Berg", 600.8, 1));
-            al.add(new Card(getSupportDrawable(R.drawable.lasagna), "Lasagne", "Picasso - Mitte", 300, 2));
-            al.add(new Card(getSupportDrawable(R.drawable.pizza), "Pizza", "Livoro - Prenzlauer Berg", 400, 2));
-            al.add(new Card(getSupportDrawable(R.drawable.springrolls), "Frühligsrollen", "Vietnam Village - Mitte", 450, 1));
-            al.add(new Card(getSupportDrawable(R.drawable.steak), "Steak", "Blockhouse - Zoo", 2005, 2));
-            al.add(new Card(getSupportDrawable(R.drawable.sushi), "Sushi", "Sushi Circle - Zehelndorf", 4000, 3));
+            al.add(new Card(md5("1"), currentLocation, getSupportDrawable(R.drawable.currywurst), "Currywurst", "Curry 36 - Kreuzberg", 1050.5, 1));
+            al.add(new Card(md5("2"), currentLocation, getSupportDrawable(R.drawable.fishnchips), "Fish'n'Chips", "Nordsee - Alexa", 440, 1));
+            al.add(new Card(md5("3"), currentLocation, getSupportDrawable(R.drawable.hamburger), "Hamburger", "Kreuzburger - Prenzlauer Berg", 600.8, 1));
+            al.add(new Card(md5("4"), currentLocation, getSupportDrawable(R.drawable.lasagna), "Lasagne", "Picasso - Mitte", 300, 2));
+            al.add(new Card(md5("5"), currentLocation, getSupportDrawable(R.drawable.pizza), "Pizza", "Livoro - Prenzlauer Berg", 400, 2));
+            al.add(new Card(md5("6"), currentLocation, getSupportDrawable(R.drawable.springrolls), "Frühligsrollen", "Vietnam Village - Mitte", 450, 1));
+            al.add(new Card(md5("7"), currentLocation, getSupportDrawable(R.drawable.steak), "Steak", "Blockhouse - Zoo", 2005, 2));
+            al.add(new Card(md5("8"), currentLocation, getSupportDrawable(R.drawable.sushi), "Sushi", "Sushi Circle - Zehelndorf", 4000, 3));
 
             //shuffle List for randomize picture order
             Collections.shuffle(al);
         }
+    }
+
+    public static String md5(final String s) {
+        final String MD5 = "MD5";
+        try {
+            // Create MD5 Hash
+            MessageDigest digest = java.security.MessageDigest
+                    .getInstance(MD5);
+            digest.update(s.getBytes());
+            byte messageDigest[] = digest.digest();
+
+            // Create Hex String
+            StringBuilder hexString = new StringBuilder();
+            for (byte aMessageDigest : messageDigest) {
+                String h = Integer.toHexString(0xFF & aMessageDigest);
+                while (h.length() < 2)
+                    h = "0" + h;
+                hexString.append(h);
+            }
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     /* On touch and on click listener */
@@ -407,7 +478,6 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
             eatMode = isChecked;
 
             Toast.makeText(this, "\"Sofort essen\" wurde " + (!isChecked ? "de":"") + "aktiviert.", Toast.LENGTH_SHORT).show();
-
         }
     }
 
@@ -419,7 +489,6 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 RadiusDialogFragment dialog = new RadiusDialogFragment();
                 dialog.setRadius(radius);
                 dialog.show(getFragmentManager(), RadiusDialogFragment.class.getSimpleName());
-                Log.d(TAG, Integer.toString(radius));
                 break;
             case R.id.nav_settings:
                 break;
@@ -432,7 +501,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
     @Override
     public void onDialogPositiveClick(RadiusDialogFragment dialog) {
-        this.radius = dialog.getRadius();
+        radius = dialog.getRadius();
         Log.d(TAG, "Radius set: " + Integer.toString(radius) + "00 m");
     }
 
@@ -471,7 +540,6 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
         // Show values of last location
         if (currentLocation != null) {
-            initFling();
             // Update something
         }
 
@@ -493,6 +561,5 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
     public void onLocationChanged(Location location) {
         currentLocation = location;
         Log.d(TAG, "lat: " + Double.toString(currentLocation.getLatitude()) + " lng: " + Double.toString(currentLocation.getLongitude()));
-        initFling();
     }
 }
