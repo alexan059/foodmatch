@@ -1,7 +1,9 @@
 package com.fancyfood.foodmatch.activities;
 
 import android.Manifest;
+import android.app.DialogFragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -11,19 +13,27 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.NavigationView;
+import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MotionEventCompat;
+import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.fancyfood.foodmatch.R;
 import com.fancyfood.foodmatch.adapters.CardAdapter;
+import com.fancyfood.foodmatch.fragments.RadiusDialogFragment;
 import com.fancyfood.foodmatch.models.Card;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -42,10 +52,20 @@ import static android.view.View.OnClickListener;
 import static android.view.View.OnTouchListener;
 
 public class MainActivity extends BaseActivity implements OnClickListener, OnTouchListener,
-        ConnectionCallbacks, OnConnectionFailedListener, LocationListener {
+        ConnectionCallbacks, OnConnectionFailedListener, LocationListener, OnCheckedChangeListener,
+        OnNavigationItemSelectedListener, RadiusDialogFragment.RadiusDialogListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int MY_PERMISSIONS_COARSE_LOCATIONS = 64;
+
+    // Shared Preferences
+    public static final String FM_PREFS = "FoodmatchPreferences";
+
+    // Defaults
+    public static final int DEF_RADIUS = 5;
+
+    // Views
+    private SwitchCompat modeSwitch;
 
     // Rating cards
     private CardAdapter cardAdapter;
@@ -57,9 +77,12 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
     private GoogleApiClient googleApiClient;
     private static Location currentLocation;
     private LocationRequest locationRequest;
+    private int radius;
 
-    // Check flag for intent
+    // Flags
     private boolean flingStarted = false;
+    private boolean eatMode = false;
+    private boolean switchTouched = false;
 
     /* Activity lifecycle */
 
@@ -68,14 +91,72 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         super.onCreate(savedInstanceState);
         inflateView(R.layout.activity_main);
 
-        Button btHungry = (Button) findViewById(R.id.btHungry);
-        Button btDiscover = (Button) findViewById(R.id.btDiscover);
-        Button btLike = (Button) findViewById(R.id.btLike);
-        Button btDislike = (Button) findViewById(R.id.btDislike);
-        dataSource = new LikeDataSource(this);                                                      //object for database management
-        Log.d(LOG_TAG, "Die Datenquelle wird geöffnet.");                                           //open  database
-        dataSource.open();
+        initButtons();
 
+        // Create instance of GoogleAPIClient
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient
+                    .Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+
+        // Get Switch Compat
+        modeSwitch = (SwitchCompat) getMenu().findItem(R.id.nav_switch)
+                .getActionView().findViewById(R.id.switch_compat);
+        modeSwitch.setOnTouchListener(this);
+        modeSwitch.setOnCheckedChangeListener(this);
+
+        // Set navigation
+        getNavigation().setNavigationItemSelectedListener(this);
+
+        // Restore preferences
+        SharedPreferences settings = getSharedPreferences(FM_PREFS, 0);
+        int radius = settings.getInt("foodRadius", DEF_RADIUS);
+        setRadius(radius);
+
+        // Init Database
+        dataSource = new LikeDataSource(this);
+        Log.d(TAG, "Die Datenquelle wird geöffnet.");
+        dataSource.open();
+    }
+
+    @Override
+    protected void onStart() {
+        googleApiClient.connect();
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        stopLocationUpdates();
+        googleApiClient.disconnect();
+        super.onStop();
+
+        // Store changed preferences
+        SharedPreferences settings = getSharedPreferences(FM_PREFS, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putInt("foodRadius", radius);
+        editor.commit();
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        if (googleApiClient.isConnected()) {
+            startLocationUpdates();
+        }
+    }
+
+    /* Helper methods */
+
+    public void initButtons() {
+        final Button btHungry = (Button) findViewById(R.id.btHungry);
+        final Button btDiscover = (Button) findViewById(R.id.btDiscover);
+        final Button btLike = (Button) findViewById(R.id.btLike);
+        final Button btDislike = (Button) findViewById(R.id.btDislike);
 
         if (btHungry != null && btDiscover != null && btLike != null && btDislike != null) {
             btHungry.setOnTouchListener(this);
@@ -94,40 +175,7 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 btDislike.setStateListAnimator(null);
             }
         }
-
-        // Create instance of GoogleAPIClient
-        if (googleApiClient == null) {
-            googleApiClient = new GoogleApiClient
-                    .Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
     }
-
-    @Override
-    protected void onStart() {
-        googleApiClient.connect();
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        stopLocationUpdates();
-        googleApiClient.disconnect();
-        super.onStop();
-    }
-
-    @Override
-    protected void onPostResume() {
-        super.onPostResume();
-        if (googleApiClient.isConnected()) {
-            startLocationUpdates();
-        }
-    }
-
-    /* Helper methods */
 
     final public void initFling() {
         // Stop if already started or location isn't ready
@@ -164,34 +212,36 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 @Override
                 public void onRightCardExit(Object dataObject) {
                     // Item liked
-                    Toast.makeText(getApplicationContext(), "LIKE", Toast.LENGTH_SHORT).show();
+                    if (eatMode) {
+                        //--------------------------------------------------------------------------
+                        //FOR DATABASE
+                        //Cast dataObject to Card to use get and set methods
+                        Card currentCard=(Card) dataObject;
+                        String dish = currentCard.getDish();
+                        String location = currentCard.getLocation();
 
-                    //--------------------------------------------------------------------------------------------------------------------------------------------------
-                    //FOR DATABASE
-                    Card currentCard=(Card) dataObject;                                             //Cast dataObject to Card to use get and set methods
-                    String dish = currentCard.getDish();
-                    String location = currentCard.getLocation();
+                        //write data to database
+                        Card cardMemo = dataSource.createCard(dish, location);
+                        //dataSource.createCard(dish,location);
 
-                    Card cardMemo = dataSource.createCard(dish, location);                           //write data to database
-                    //dataSource.createCard(dish,location);
+                        //only for testing purposes
+                        Log.d(TAG, "Es wurde der folgende Eintrag in die Datenbank geschrieben:");
+                        Log.d(TAG, "Gericht: " + cardMemo.getDish() + " Location: "+ cardMemo.getLocation());
+                        //testing getting all elements from database
+                        List<Card> InhaltDB=dataSource.getAllCardMemos();
+                        Log.d(TAG, "number of element in the DB: " + InhaltDB.size());
+                        //--------------------------------------------------------------------------
 
-                    //only for testing purposes
-                    Log.d(LOG_TAG, "Es wurde der folgende Eintrag in die Datenbank geschrieben:");
-					Log.d(LOG_TAG, "Gericht: " + cardMemo.getDish() + " Location: "+ cardMemo.getLocation());
-                    //testing getting all elements from database
-                    List<Card> InhaltDB=dataSource.getAllCardMemos();
-                    Log.d(LOG_TAG, "number of element in the DB: " + InhaltDB.size());
-                    //---------------------------------------------------------------------------------------------------------------------------------------------------
+                        // Method to change Activity ->get MapsActivity
+                        Intent i = new Intent(MainActivity.this, MapsActivity.class);
 
-                    // Method to change Activity ->get MapsActivity
-                    Intent i = new Intent(MainActivity.this, MapsActivity.class);
-                    // Add data to Intent to use them in MapActivity
-                    i.putExtra("Lat", currentLocation.getLatitude());
-                    i.putExtra("Lng", currentLocation.getLongitude());
+                        // Add data to Intent to use them in MapActivity
+                        i.putExtra("Lat", currentLocation.getLatitude());
+                        i.putExtra("Lng", currentLocation.getLongitude());
 
-                    // StartMapsActivity
-                    startActivity(i);
-
+                        // StartMapsActivity
+                        startActivity(i);
+                    }
                 }
 
                 @Override
@@ -265,6 +315,12 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         });
     }
 
+    /* Getter and Setter */
+
+    public void setRadius(int radius) {
+        this.radius = radius;
+    }
+
     /* Dummy data */
 
     /**
@@ -293,7 +349,6 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
             //shuffle List for randomize picture order
             Collections.shuffle(al);
-
         }
     }
 
@@ -304,6 +359,8 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
         switch (v.getId()) {
             case R.id.btHungry:
+                eatMode = true;
+                modeSwitch.setChecked(true);
             case R.id.btDiscover:
                 collapseToolbar();
                 break;
@@ -321,14 +378,57 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        int action = MotionEventCompat.getActionMasked(event);
 
-        if (action == MotionEvent.ACTION_DOWN) {
-            // Feedback on touch down
-            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        if (v.getId() == R.id.switch_compat) {
+            switchTouched = true;
+            if (!flingStarted)
+                collapseToolbar();
+        } else {
+            int action = MotionEventCompat.getActionMasked(event);
+
+            if (action == MotionEvent.ACTION_DOWN) {
+                // Feedback on touch down
+                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            }
         }
 
         return false;
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (switchTouched) {
+            switchTouched = false;
+            eatMode = isChecked;
+
+            Toast.makeText(this, "\"Sofort essen\" wurde " + (!isChecked ? "de":"") + "aktiviert.", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+
+        switch(item.getItemId()) {
+            case R.id.nav_radius:
+                RadiusDialogFragment dialog = new RadiusDialogFragment();
+                dialog.setRadius(radius);
+                dialog.show(getFragmentManager(), RadiusDialogFragment.class.getSimpleName());
+                Log.d(TAG, Integer.toString(radius));
+                break;
+            case R.id.nav_settings:
+                break;
+        }
+
+        return false;
+    }
+
+    /* Radius Dialog Listener */
+
+    @Override
+    public void onDialogPositiveClick(RadiusDialogFragment dialog) {
+        this.radius = dialog.getRadius();
+        Log.d(TAG, "Radius set: " + Integer.toString(radius) + "00 m");
     }
 
     /* Location Helper */
@@ -389,21 +489,5 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         currentLocation = location;
         Log.d(TAG, "lat: " + Double.toString(currentLocation.getLatitude()) + " lng: " + Double.toString(currentLocation.getLongitude()));
         initFling();
-    }
-
-    @Override
-    protected void onPause() {                                                                      //close Database when MainActivity pause
-        super.onPause();
-
-        Log.d(LOG_TAG, "Die Datenquelle wird geschlossen.");
-        dataSource.close();
-    }
-    @Override
-    protected void onResume(){
-        Log.d(LOG_TAG, "Die Datenquelle wird wieder geöffnet.");                                    //when from MapsActivity back to MainActivity
-        super.onResume();
-
-        dataSource.open();
-
     }
 }

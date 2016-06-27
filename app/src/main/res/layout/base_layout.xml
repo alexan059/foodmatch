@@ -118,12 +118,12 @@
     </android.support.design.widget.CoordinatorLayout>
 
     <!-- Navigation drawer -->
-    <ListView
+    <android.support.design.widget.NavigationView
         android:id="@+id/left_drawer"
-        android:layout_width="240dp"
+        android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:divider="@color/transparent"
-        android:dividerHeight="0dp"
-        android:background="@color/colorBackground"/>
+        android:background="@color/colorBackground"
+        app:headerLayout="@layout/navigation_header"
+        app:menu="@menu/navigation_drawer_items" />
 </android.support.v4.widget.DrawerLayout>

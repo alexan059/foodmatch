@@ -16,6 +16,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     MainActivity activity;
 
+    // Button IDs
+    private static final int BT_HUNGRY = R.id.btHungry;
+    private static final int BT_LIKE = R.id.btLike;
+    private static final int BT_DISLIKE = R.id.btDislike;
+
     public MainActivityTest() {
         super(MainActivity.class);
     }
@@ -29,17 +34,35 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     @SmallTest
     public void testButtons() {
-        onView(withId(R.id.btHungry)).perform(click());
-    }
+        // Start fling
+        onView(withId(BT_HUNGRY)).perform(click());
 
-    @SmallTest
-    public void testDisike() {
-        onView(withId(R.id.btDislike)).perform(click());
-    }
+        // 3 x dislike
+        onView(withId(BT_DISLIKE)).perform(click());
+        onView(withId(BT_DISLIKE)).perform(click());
+        onView(withId(BT_DISLIKE)).perform(click());
 
-    @SmallTest
-    public void testLike() {
-        onView(withId(R.id.btLike)).perform(click());
+        // Wait for maps
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // 100 x dislike
+        for (int i = 0; i < 5; i++) {
+            onView(withId(BT_DISLIKE)).perform(click());
+        }
+
+        // 1 x like
+        onView(withId(BT_LIKE)).perform(click());
+
+        // Wait for maps
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @After
