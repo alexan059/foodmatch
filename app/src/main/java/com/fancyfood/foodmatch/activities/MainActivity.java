@@ -35,7 +35,7 @@ import com.fancyfood.foodmatch.adapters.CardAdapter;
 import com.fancyfood.foodmatch.data.RatingDataSource;
 import com.fancyfood.foodmatch.fragments.RadiusDialogFragment;
 import com.fancyfood.foodmatch.models.Card;
-import com.fancyfood.foodmatch.models.CardRating;
+import com.fancyfood.foodmatch.models.Rating;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
@@ -242,14 +242,14 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                 public void onLeftCardExit(Object dataObject) {
                     // Item disliked
                     Card currentCard = (Card) dataObject;
-                    insertLike(currentCard, false);
+                    insertRating(currentCard, false);
                 }
 
                 @Override
                 public void onRightCardExit(Object dataObject) {
                     // Item liked
                     Card currentCard = (Card) dataObject;
-                    insertLike(currentCard, true);
+                    insertRating(currentCard, true);
 
                     if (eatMode) {
                         // Method to change Activity ->get MapsActivity
@@ -338,20 +338,20 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         });
     }
 
-    private void insertLike(Card card, boolean rating) {
+    private void insertRating(Card card, boolean rating) {
         //--------------------------------------------------------------------------
         //FOR DATABASE
         //Cast dataObject to Card to use get and set methods
-        String dishID = card.getID();
+        Rating newRating = new Rating(card.getID(), rating, card.getPosition(), null);
 
         //write data to database
-        CardRating ratingMemo = dataSource.createRating(dishID, rating);
+        Rating ratingMemo = dataSource.createRating(newRating);
 
         //only for testing purposes
         Log.d(TAG, "Es wurde der folgende Eintrag in die Datenbank geschrieben:");
         Log.d(TAG, "Gericht: " + ratingMemo.getID());
         //testing getting all elements from database
-        List<CardRating> InhaltDB = dataSource.getAllRatingMemos();
+        List<Rating> InhaltDB = dataSource.getAllRatingMemos();
         Log.d(TAG, "number of element in the DB: " + InhaltDB.size());
         //--------------------------------------------------------------------------
     }

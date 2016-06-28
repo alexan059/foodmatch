@@ -22,7 +22,9 @@ public class RatingDbHelper extends SQLiteOpenHelper {
     public static final String COLUMN_ID = "_id";
     public static final String COLUMN_DISH_ID = "dish_id";
     public static final String COLUMN_RATING = "rating";
-    public static final String COLUMN_TIME = "created_at";
+    public static final String COLUMN_TIMESTAMP = "created_at";
+    public static final String COLUMN_LAT = "lat";
+    public static final String COLUMN_LNG = "lng";
 
 
     public static final String SQL_CREATE =
@@ -30,7 +32,9 @@ public class RatingDbHelper extends SQLiteOpenHelper {
                         "(" + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                             + COLUMN_DISH_ID + " VARCHAR(255) NOT NULL, "
                             + COLUMN_RATING + " TINYINT(1) NOT NULL, "
-                            + COLUMN_TIME + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);";
+                            + COLUMN_TIMESTAMP + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL);"
+                            + COLUMN_LAT + " FLOAT(10,6) NOT NULL"
+                            + COLUMN_LNG + " FLOAT(10,6) NOT NULL";
 
 
     public RatingDbHelper(Context context) {                                                          //Create Database

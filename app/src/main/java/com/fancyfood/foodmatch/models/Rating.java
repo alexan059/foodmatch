@@ -1,12 +1,15 @@
 package com.fancyfood.foodmatch.models;
 
-public class CardRating {
+import android.location.Location;
+
+public class Rating {
 
     private String _id;
     private boolean rating;
     private String timestamp;
+    private Location location;
 
-    public CardRating(String _id, boolean rating, String timestamp) {
+    public Rating(String _id, boolean rating, Location location, String timestamp) {
         this._id = _id;
         this.rating = rating;
         this.timestamp = timestamp;
@@ -26,6 +29,14 @@ public class CardRating {
 
     public void setRating(boolean rating) {
         this.rating = rating;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
     }
 
     public String getTimestamp() {

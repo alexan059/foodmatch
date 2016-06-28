@@ -4,10 +4,11 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
 import android.util.Log;
 
 import com.fancyfood.foodmatch.data.migrations.RatingDbHelper;
-import com.fancyfood.foodmatch.models.CardRating;
+import com.fancyfood.foodmatch.models.Rating;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,9 @@ public class RatingDataSource {
             RatingDbHelper.COLUMN_ID,
             RatingDbHelper.COLUMN_DISH_ID,
             RatingDbHelper.COLUMN_RATING,
-            RatingDbHelper.COLUMN_TIME
+            RatingDbHelper.COLUMN_TIMESTAMP,
+            RatingDbHelper.COLUMN_LAT,
+            RatingDbHelper.COLUMN_LNG
     };
 
 
@@ -36,8 +39,10 @@ public class RatingDataSource {
     }
 
     public void open() {
-        Log.d(LOG_TAG, "Eine Referenz auf die Datenbank wird jetzt angefragt.");                    //open() and close() connection to the database
-        database = dbHelper.getWritableDatabase();                                                  //getWritableDatabase();  open and write db
+        //open() and close() connection to the database
+        Log.d(LOG_TAG, "Eine Referenz auf die Datenbank wird jetzt angefragt.");
+        //getWritableDatabase();  open and write db
+        database = dbHelper.getWritableDatabase();
         Log.d(LOG_TAG, "Datenbank-Referenz erhalten. Pfad zur Datenbank: " + database.getPath());
     }
 
@@ -46,32 +51,36 @@ public class RatingDataSource {
         Log.d(LOG_TAG, "Datenbank mit Hilfe des DbHelpers geschlossen.");
     }
 
-    public CardRating createRating(String dishID, boolean rating) {
+    public Rating createRating(Rating rating) {
         ContentValues values = new ContentValues();
 
-        values.put(RatingDbHelper.COLUMN_DISH_ID, dishID);
-        values.put(RatingDbHelper.COLUMN_RATING, rating);
+        values.put(RatingDbHelper.COLUMN_DISH_ID, rating.getID());
+        values.put(RatingDbHelper.COLUMN_RATING, rating.getRating());
+        values.put(RatingDbHelper.COLUMN_LAT, rating.getLocation().getLatitude());
+        values.put(RatingDbHelper.COLUMN_LNG, rating.getLocation().getLongitude());
 
-        long insertId = database.insert(RatingDbHelper.TABLE_RATINGS, null, values);                    //write data in the database/ table
+        //write data in the database/ table
+        long insertId = database.insert(RatingDbHelper.TABLE_RATINGS, null, values);
 
         Cursor cursor = database.query(RatingDbHelper.TABLE_RATINGS,columns, RatingDbHelper.COLUMN_ID + "=" + insertId,
                 null, null, null, null);
 
         cursor.moveToFirst();
-        CardRating ratingMemo = cursorToRatingMemo(cursor);
+        Rating ratingMemo = cursorToRatingMemo(cursor);
         cursor.close();
 
         return ratingMemo;
     }
 
-    public List<CardRating> getAllRatingMemos() {                                                           //method to get/read all likes(favorites)
-        List<CardRating> ratingMemoList = new ArrayList<>();
+    //method to get/read all likes(favorites)
+    public List<Rating> getAllRatingMemos() {
+        List<Rating> ratingMemoList = new ArrayList<Rating>();
 
         Cursor cursor = database.query(RatingDbHelper.TABLE_RATINGS,
                 columns, null, null, null, null, null);
 
         cursor.moveToFirst();
-        CardRating ratingMemo;
+        Rating ratingMemo;
 
         while(!cursor.isAfterLast()) {
             ratingMemo = cursorToRatingMemo(cursor);
@@ -85,19 +94,25 @@ public class RatingDataSource {
         return ratingMemoList;
     }
 
-    private CardRating cursorToRatingMemo(Cursor cursor) {                                                  //method to convert cursor to card
+    //method to convert cursor to card
+    private Rating cursorToRatingMemo(Cursor cursor) {
 
         int idDishID = cursor.getColumnIndex(RatingDbHelper.COLUMN_DISH_ID);
         int idRating = cursor.getColumnIndex(RatingDbHelper.COLUMN_RATING);
-        int idCreatedAt = cursor.getColumnIndex(RatingDbHelper.COLUMN_TIME);
+        int idCreatedAt = cursor.getColumnIndex(RatingDbHelper.COLUMN_TIMESTAMP);
+        int idLat = cursor.getColumnIndex(RatingDbHelper.COLUMN_LAT);
+        int idLng = cursor.getColumnIndex(RatingDbHelper.COLUMN_LNG);
 
         String id = cursor.getString(idDishID);
         boolean rating = (cursor.getInt(idRating) == 1);
+        Location location = new Location("");
+        location.setLatitude(cursor.getFloat(idLat));
+        location.setLongitude(cursor.getFloat(idLng));
         String createdAt = cursor.getString(idCreatedAt);
 
         Log.d(LOG_TAG, "gespeichert am: " + createdAt);
 
-        return new CardRating(id,rating,createdAt);
+        return new Rating(id,rating,location,createdAt);
 
     }
 
