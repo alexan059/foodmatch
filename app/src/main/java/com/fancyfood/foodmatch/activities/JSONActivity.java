@@ -3,6 +3,7 @@ package com.fancyfood.foodmatch.activities;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -23,7 +24,7 @@ import java.net.URL;
 
 public class JSONActivity extends AppCompatActivity {
 
-    public static TextView textView;
+    public TextView textView;
     private static final String LOG_TAG = JSONActivity.class.getSimpleName();
 
     @Override
@@ -43,11 +44,7 @@ public class JSONActivity extends AppCompatActivity {
         });
     }
 
-    public static class JSONTask extends AsyncTask<String, String, String> {
-
-        public interface OnJSONResultListener {
-            void OnJSONResult(JSONArray resultArray);
-        }
+    public class JSONTask extends AsyncTask<String, String, String> {
 
         // IntentService
         @Override
@@ -75,10 +72,9 @@ public class JSONActivity extends AppCompatActivity {
 
                 // check response code
                 if (connection.getResponseCode() == 200) {
-
-                    //
                     String finalJson = buffer.toString();
                     JSONArray parentArray = new JSONArray(finalJson);
+                    return finalJson;
                 }
 
                 JSONArray parentArray = null;
