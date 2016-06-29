@@ -1,4 +1,4 @@
-package com.fancyfood.foodmatch.data.migrations;
+package com.fancyfood.foodmatch.data;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

@@ -10,7 +10,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
@@ -30,19 +29,17 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.fancyfood.foodmatch.core.CoreActivity;
+import com.fancyfood.foodmatch.core.CoreApplication;
 import com.fancyfood.foodmatch.R;
 import com.fancyfood.foodmatch.adapters.CardAdapter;
 import com.fancyfood.foodmatch.data.RatingDataSource;
 import com.fancyfood.foodmatch.fragments.RadiusDialogFragment;
+import com.fancyfood.foodmatch.fragments.RadiusDialogFragment.RadiusDialogListener;
+import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper;
+import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper.OnLocationChangedListener;
 import com.fancyfood.foodmatch.models.Card;
 import com.fancyfood.foodmatch.models.Rating;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
-import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.security.MessageDigest;
@@ -54,21 +51,17 @@ import java.util.List;
 import static android.view.View.OnClickListener;
 import static android.view.View.OnTouchListener;
 
-public class MainActivity extends BaseActivity implements OnClickListener, OnTouchListener,
-        ConnectionCallbacks, OnConnectionFailedListener, LocationListener, OnCheckedChangeListener,
-        OnNavigationItemSelectedListener, RadiusDialogFragment.RadiusDialogListener {
+public class MainActivity extends CoreActivity implements OnClickListener, OnTouchListener,
+        OnCheckedChangeListener, OnLocationChangedListener, OnNavigationItemSelectedListener, RadiusDialogListener {
 
     // Debug Tag
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    // App Constants
-    private static final int MY_PERMISSIONS_COARSE_LOCATIONS = 64;
-
     // Shared Preferences
-    public static final String FM_PREFS = "FoodmatchPreferences";
+    public static final String FOODMATCH_PREFERENCES = "com.fancyfood.foodmatch.preferences";
 
     // Defaults
-    public static final int DEF_RADIUS = 5;
+    public static final int DEFAULT_RADIUS = 5;
 
     // Views
     private SwitchCompat modeSwitch;
@@ -80,10 +73,8 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
     private SwipeFlingAdapterView flingContainer;
     private RatingDataSource dataSource;
 
-    // Location client
-    private GoogleApiClient googleApiClient;
-    private static Location currentLocation;
-    private LocationRequest locationRequest;
+    private GoogleApiLocationHelper locationHelper;
+    private Location currentLocation;
     private int radius;
 
     // Flags
@@ -100,16 +91,6 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
 
         initButtons();
 
-        // Create instance of GoogleAPIClient
-        if (googleApiClient == null) {
-            googleApiClient = new GoogleApiClient
-                    .Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
-
         // Get Switch Compat
         modeSwitch = (SwitchCompat) getMenu().findItem(R.id.nav_switch)
                 .getActionView().findViewById(R.id.switch_compat);
@@ -120,8 +101,8 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         getNavigation().setNavigationItemSelectedListener(this);
 
         // Restore preferences
-        SharedPreferences settings = getSharedPreferences(FM_PREFS, 0);
-        radius = settings.getInt("foodRadius", DEF_RADIUS);
+        SharedPreferences settings = getSharedPreferences(FOODMATCH_PREFERENCES, 0);
+        radius = settings.getInt("foodRadius", DEFAULT_RADIUS);
 
         // Progress bar
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
@@ -130,33 +111,66 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         dataSource = new RatingDataSource(this);
         Log.d(TAG, "Die Datenquelle wird geöffnet.");
         dataSource.open();
+
+        if (CoreApplication.getGoogleApiHelper() != null) {
+            locationHelper = CoreApplication.getGoogleApiHelper();
+            locationHelper.setOnLocationChangedListener(this);
+        }
     }
 
     @Override
     protected void onStart() {
-        googleApiClient.connect();
         super.onStart();
+
+        if (locationHelper != null && !locationHelper.isConnected()) {
+            locationHelper.connect();
+        }
     }
 
     @Override
     protected void onStop() {
-        stopLocationUpdates();
-        googleApiClient.disconnect();
         super.onStop();
 
+        if (locationHelper != null && locationHelper.isConnected()) {
+            locationHelper.disconnect();
+        }
+
         // Store changed preferences
-        SharedPreferences settings = getSharedPreferences(FM_PREFS, 0);
+        SharedPreferences settings = getSharedPreferences(FOODMATCH_PREFERENCES, 0);
         SharedPreferences.Editor editor = settings.edit();
         editor.putInt("foodRadius", radius);
         editor.apply();
     }
 
     @Override
-    protected void onPostResume() {
-        super.onPostResume();
-        if (googleApiClient.isConnected()) {
-            startLocationUpdates();
+    public void onLocationChanged(Location location) {
+        currentLocation = location;
+        Log.d(TAG, "Position: LAT " + Double.toString(location.getLatitude()) + "| LNG " + Double.toString(location.getLongitude()));
+    }
+
+    @Override
+    public void showPermissionDialog() {
+        ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, GoogleApiLocationHelper.MY_PERMISSIONS_COARSE_LOCATIONS);
+        ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_FINE_LOCATION }, GoogleApiLocationHelper.MY_PERMISSIONS_FINE_LOCATIONS);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        // Handle permission requests
+        switch (requestCode) {
+            case GoogleApiLocationHelper.MY_PERMISSIONS_COARSE_LOCATIONS:
+            case GoogleApiLocationHelper.MY_PERMISSIONS_FINE_LOCATIONS:
+                // Permission granted
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    locationHelper.startDelayedService();
+                }
+                // Permission denied
+                else {
+                    Toast.makeText(this, "Es kann kein Standort abgerufen werden!", Toast.LENGTH_SHORT).show();
+                }
         }
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     /* Async Task */
@@ -255,8 +269,8 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
                         // Method to change Activity ->get MapsActivity
                         Intent i = new Intent(MainActivity.this, MapsActivity.class);
 
-                        double lat = currentCard.getPosition().getLatitude();
-                        double lng = currentCard.getPosition().getLongitude();
+                        double lat = currentCard.getLocation().getLatitude();
+                        double lng = currentCard.getLocation().getLongitude();
 
                         // Add data to Intent to use them in MapActivity
                         i.putExtra("Lat", lat);
@@ -342,14 +356,14 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         //--------------------------------------------------------------------------
         //FOR DATABASE
         //Cast dataObject to Card to use get and set methods
-        Rating newRating = new Rating(card.getID(), rating, card.getPosition(), null);
+        Rating newRating = new Rating(card.getReference(), rating, card.getLocation(), null);
 
         //write data to database
         Rating ratingMemo = dataSource.createRating(newRating);
 
         //only for testing purposes
         Log.d(TAG, "Es wurde der folgende Eintrag in die Datenbank geschrieben:");
-        Log.d(TAG, "Gericht: " + ratingMemo.getID());
+        Log.d(TAG, "Gericht: " + ratingMemo.getReference());
         //testing getting all elements from database
         List<Rating> InhaltDB = dataSource.getAllRatingMemos();
         Log.d(TAG, "number of element in the DB: " + InhaltDB.size());
@@ -505,61 +519,4 @@ public class MainActivity extends BaseActivity implements OnClickListener, OnTou
         Log.d(TAG, "Radius set: " + Integer.toString(radius) + "00 m");
     }
 
-    /* Location Helper */
-
-    protected void createLocationRequests() {
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
-
-    protected void startLocationUpdates() {
-        // API 23+ Check explicitly for granted permissions or retrieve them
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-           ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, MY_PERMISSIONS_COARSE_LOCATIONS);
-        }
-        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
-    }
-
-    protected void stopLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
-    }
-
-    /* Google Api Client */
-
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        // API 23+ Check explicitly for granted permissions or retrieve them
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, MY_PERMISSIONS_COARSE_LOCATIONS);
-        }
-
-        // Get last location and store it
-        currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-
-        // Show values of last location
-        if (currentLocation != null) {
-            // Update something
-        }
-
-        createLocationRequests();
-        startLocationUpdates();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        currentLocation = location;
-        Log.d(TAG, "lat: " + Double.toString(currentLocation.getLatitude()) + " lng: " + Double.toString(currentLocation.getLongitude()));
-    }
 }

@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.util.Log;
 
-import com.fancyfood.foodmatch.data.migrations.RatingDbHelper;
 import com.fancyfood.foodmatch.models.Rating;
 
 import java.util.ArrayList;
@@ -54,7 +53,7 @@ public class RatingDataSource {
     public Rating createRating(Rating rating) {
         ContentValues values = new ContentValues();
 
-        values.put(RatingDbHelper.COLUMN_DISH_ID, rating.getID());
+        values.put(RatingDbHelper.COLUMN_DISH_ID, rating.getReference());
         values.put(RatingDbHelper.COLUMN_RATING, rating.getRating());
         values.put(RatingDbHelper.COLUMN_LAT, rating.getLocation().getLatitude());
         values.put(RatingDbHelper.COLUMN_LNG, rating.getLocation().getLongitude());
@@ -85,7 +84,7 @@ public class RatingDataSource {
         while(!cursor.isAfterLast()) {
             ratingMemo = cursorToRatingMemo(cursor);
             ratingMemoList.add(ratingMemo);
-            Log.d(LOG_TAG, "Gericht ID: " + ratingMemo.getID());
+            Log.d(LOG_TAG, "Gericht ID: " + ratingMemo.getReference());
             cursor.moveToNext();
         }
 

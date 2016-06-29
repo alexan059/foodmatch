@@ -69,7 +69,7 @@ public class CardAdapter extends ArrayAdapter<Card> {
         // Assign new data to view holder
         viewHolder.image.setImageDrawable(getItem(position).getImage());
         viewHolder.dish.setText(getItem(position).getDish());
-        viewHolder.location.setText(getItem(position).getLocation());
+        viewHolder.location.setText(getItem(position).getLocationName());
 
 
         // Return manipulated view
