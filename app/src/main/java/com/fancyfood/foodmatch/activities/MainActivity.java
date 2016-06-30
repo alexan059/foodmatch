@@ -33,7 +33,7 @@ import com.fancyfood.foodmatch.core.CoreActivity;
 import com.fancyfood.foodmatch.core.CoreApplication;
 import com.fancyfood.foodmatch.R;
 import com.fancyfood.foodmatch.adapters.CardAdapter;
-import com.fancyfood.foodmatch.data.RatingDataSource;
+import com.fancyfood.foodmatch.data.RatingsDataSource;
 import com.fancyfood.foodmatch.fragments.RadiusDialogFragment;
 import com.fancyfood.foodmatch.fragments.RadiusDialogFragment.RadiusDialogListener;
 import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper;
@@ -71,8 +71,9 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     private CardAdapter cardAdapter;
     private ArrayList<Card> al;
     private SwipeFlingAdapterView flingContainer;
-    private RatingDataSource dataSource;
+    private RatingsDataSource dataSource;
 
+    // Location and radius settings
     private GoogleApiLocationHelper locationHelper;
     private Location currentLocation;
     private int radius;
@@ -82,7 +83,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     private boolean eatMode = false;
     private boolean switchTouched = false;
 
-    /* Activity lifecycle */
+    /* Activity Lifecycle */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +109,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
 
         // Init Database
-        dataSource = new RatingDataSource(this);
+        dataSource = new RatingsDataSource(this);
         Log.d(TAG, "Die Datenquelle wird geöffnet.");
         dataSource.open();
 
@@ -141,6 +142,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         editor.putInt("foodRadius", radius);
         editor.apply();
     }
+
+    /* Google Api Helper and Location Listener */
 
     @Override
     public void onLocationChanged(Location location) {
@@ -290,13 +293,14 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
                 @Override
                 public void onScroll(float v) {
+
                 }
             });
 
-            // Optionally add an OnItemClickListener
             flingContainer.setOnItemClickListener(new SwipeFlingAdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClicked(int itemPosition, Object dataObject) {
+
                 }
             });
 
@@ -460,8 +464,6 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
             case R.id.btDislike:
                 flingContainer.getTopCardListener().selectLeft();
                 break;
-            default:
-                // Do nothing
         }
 
     }
@@ -471,8 +473,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
         if (v.getId() == R.id.switch_compat) {
             switchTouched = true;
-            if (!flingStarted)
-                collapseToolbar();
+            if (!flingStarted) collapseToolbar();
         } else {
             int action = MotionEventCompat.getActionMasked(event);
 
