@@ -2,10 +2,12 @@ package com.fancyfood.foodmatch.activities;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +17,7 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
@@ -29,6 +32,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.fancyfood.foodmatch.Constants;
 import com.fancyfood.foodmatch.core.CoreActivity;
 import com.fancyfood.foodmatch.core.CoreApplication;
 import com.fancyfood.foodmatch.R;
@@ -40,6 +44,8 @@ import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper;
 import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper.OnLocationChangedListener;
 import com.fancyfood.foodmatch.models.Card;
 import com.fancyfood.foodmatch.models.Rating;
+import com.fancyfood.foodmatch.services.CardReciever;
+import com.fancyfood.foodmatch.services.CardsPullService;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.security.MessageDigest;
@@ -117,6 +123,15 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
             locationHelper = CoreApplication.getGoogleApiHelper();
             locationHelper.setOnLocationChangedListener(this);
         }
+
+        // "restaurants/55.56/57.6/2000" -> resource/lat/lng/radius
+        Intent intent = new Intent(this, CardsPullService.class);
+        intent.setData(Uri.parse("restaurants"));
+        startService(intent);
+
+        IntentFilter filter = new IntentFilter(Constants.BROADCAST_ACTION);
+        CardReciever reciever = new CardReciever();
+        LocalBroadcastManager.getInstance(this).registerReceiver(reciever, filter);
     }
 
     @Override
