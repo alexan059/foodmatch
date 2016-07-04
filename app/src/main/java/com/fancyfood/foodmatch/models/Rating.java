@@ -4,23 +4,24 @@ import android.location.Location;
 
 public class Rating {
 
-    private String _id;
+    private String reference;
     private boolean rating;
     private String timestamp;
     private Location location;
 
-    public Rating(String _id, boolean rating, Location location, String timestamp) {
-        this._id = _id;
+    public Rating(String reference, boolean rating, Location location, String timestamp) {
+        this.reference = reference;
         this.rating = rating;
+        this.location = location;
         this.timestamp = timestamp;
     }
 
-    public String getID() {
-        return _id;
+    public String getReference() {
+        return reference;
     }
 
-    public void setID(String _id) {
-        this._id = _id;
+    public void setReference(String reference) {
+        this.reference = reference;
     }
 
     public boolean getRating() {

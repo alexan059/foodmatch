@@ -1,4 +1,4 @@
-package com.fancyfood.foodmatch.activities;
+package com.fancyfood.foodmatch.core;
 
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
@@ -8,25 +8,21 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
-import android.widget.ListView;
 
 import com.fancyfood.foodmatch.R;
 
 /**
- * The BaseActivity class has a custom Toolbar and Navigation Drawer to
+ * The CoreActivity class has a custom Toolbar and Navigation Drawer to
  * be used in multiple activities without redefining them every time.
  */
-public class BaseActivity extends AppCompatActivity {
+public class CoreActivity extends AppCompatActivity {
 
-    private static final String TAG = BaseActivity.class.getSimpleName();
+    private static final String TAG = CoreActivity.class.getSimpleName();
 
     private DrawerLayout drawerLayout;
     private FrameLayout contentFrame;
@@ -70,9 +66,6 @@ public class BaseActivity extends AppCompatActivity {
 
         ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open_toolbar_text, R.string.close_toolbar_text);
         drawerLayout.addDrawerListener(drawerToggle);
-
-        //String[] navigationItems = {"Option A", "Option B", "Favoriten"};
-        //drawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, navigationItems));
 
     }
 

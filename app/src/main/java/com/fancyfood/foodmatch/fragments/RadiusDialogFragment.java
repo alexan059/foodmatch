@@ -26,7 +26,7 @@ public class RadiusDialogFragment extends DialogFragment implements OnSeekBarCha
 
     // Interface for callback options exchange
     public interface RadiusDialogListener {
-        public void onDialogPositiveClick(RadiusDialogFragment dialog);
+        void onDialogPositiveClick(RadiusDialogFragment dialog);
     }
 
     public RadiusDialogListener listener;

@@ -13,57 +13,49 @@ public class Card {
     // For Displaying Card
     private Drawable image;
     private String dish;
-    private String location;
+    private String locationName;
     private double distance;
     private int pricing;
 
     // Attached information
-    private Location position;
-    private String _id;
+    private Location location;
+    private String reference;
 
-    public Card(String _id, Location position, Drawable image, String dish, String location, double distance, int pricing) {
-        this._id = _id;
-        this.position = position;
+    public Card(String reference, Location location, Drawable image, String dish, String locationName, double distance, int pricing) {
+        this.reference = reference;
+        this.location = location;
         this.image = image;
         this.dish = dish;
-        this.location = location;
+        this.locationName = locationName;
         this.distance = distance;
         this.pricing = pricing;
     }
 
-    public Card(String _id, Location position, Context context, int imageId, String dish, String location, double distance, int pricing) {
-        this._id = _id;
-        this.position = position;
+    public Card(String reference, Location location, Context context, int imageId, String dish, String locationName, double distance, int pricing) {
+        this.reference = reference;
+        this.location = location;
         this.image = ContextCompat.getDrawable(context, imageId);
         this.dish = dish;
-        this.location = location;
+        this.locationName = locationName;
+
         this.distance = distance;
         this.pricing = pricing;
     }
 
-    public String getPricingDollars() {
-        String str = "";
-        for (int i = 0; i < this.pricing; i++) {
-            str += "$";
-        }
-
-        return str;
+    public Location getLocation() {
+        return location;
     }
 
-    public Location getPosition() {
-        return position;
+    public void setLocation(Location location) {
+        this.location = location;
     }
 
-    public void setPosition(Location position) {
-        this.position = position;
+    public String getReference() {
+        return reference;
     }
 
-    public String getID() {
-        return _id;
-    }
-
-    public void setID(String _id) {
-        this._id = _id;
+    public void setReference(String reference) {
+        this.reference = reference;
     }
 
     public String getDish() {
@@ -74,12 +66,12 @@ public class Card {
         this.dish = dish;
     }
 
-    public String getLocation() {
-        return location;
+    public String getLocationName() {
+        return locationName;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public void setLocationName(String locationName) {
+        this.locationName = locationName;
     }
 
     public double getDistance() {
