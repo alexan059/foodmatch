@@ -23,7 +23,7 @@ public class RatingsDataSource {
 
     private static final String TAG = RatingsDataSource.class.getSimpleName();
 
-    private SQLiteDatabase database;
+    private SQLiteDatabase db;
     private DatabaseHelper dbHelper;
 
     private String[] columns = {
@@ -41,20 +41,8 @@ public class RatingsDataSource {
         dbHelper = new DatabaseHelper(context);
     }
 
-    public void open() {
-        //open() and close() connection to the database
-        Log.d(TAG, "Eine Referenz auf die Datenbank wird jetzt angefragt.");
-        //getWritableDatabase();  open and write db
-        database = dbHelper.getWritableDatabase();
-        Log.d(TAG, "Datenbank-Referenz erhalten. Pfad zur Datenbank: " + database.getPath());
-    }
-
-    public void close() {
-        dbHelper.close();
-        Log.d(TAG, "Datenbank mit Hilfe des DbHelpers geschlossen.");
-    }
-
     public Rating createRating(Rating rating) {
+        db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
 
         values.put(COLUMN_NAME_DISH_ID, rating.getReference());
@@ -62,24 +50,26 @@ public class RatingsDataSource {
         values.put(COLUMN_NAME_LAT, rating.getLocation().getLatitude());
         values.put(COLUMN_NAME_LNG, rating.getLocation().getLongitude());
 
-        //write data in the database/ table
-        long insertId = database.insert(RatingsContract.RatingEntry.TABLE_NAME, null, values);
+        //write data in the db/ table
+        long insertId = db.insert(RatingsContract.RatingEntry.TABLE_NAME, null, values);
 
-        Cursor cursor = database.query(RatingsContract.RatingEntry.TABLE_NAME,columns,
+        Cursor cursor = db.query(RatingsContract.RatingEntry.TABLE_NAME,columns,
                 _ID + "=" + insertId, null, null, null, null);
 
         cursor.moveToFirst();
         Rating ratingMemo = cursorToRatingMemo(cursor);
         cursor.close();
+        db.close();
 
         return ratingMemo;
     }
 
     //method to get/read all likes(favorites)
     public List<Rating> getAllRatingMemos() {
+        db = dbHelper.getReadableDatabase();
         List<Rating> ratingMemoList = new ArrayList<Rating>();
 
-        Cursor cursor = database.query(RatingsContract.RatingEntry.TABLE_NAME,
+        Cursor cursor = db.query(RatingsContract.RatingEntry.TABLE_NAME,
                 columns, null, null, null, null, null);
 
         cursor.moveToFirst();
@@ -93,6 +83,7 @@ public class RatingsDataSource {
         }
 
         cursor.close();
+        db.close();
 
         return ratingMemoList;
     }

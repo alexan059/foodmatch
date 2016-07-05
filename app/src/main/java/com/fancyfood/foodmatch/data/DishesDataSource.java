@@ -13,13 +13,10 @@ import android.location.Location;
 import android.util.Log;
 
 import com.fancyfood.foodmatch.models.Card;
-import com.fancyfood.foodmatch.models.Rating;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.fancyfood.foodmatch.data.DishesContract.DishEntry.COLUMN_NAME_CREATED_AT;
 import static com.fancyfood.foodmatch.data.DishesContract.DishEntry._ID;
@@ -69,8 +66,8 @@ public class DishesDataSource {
 
         // Create values
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_DISH_ID, card.getReference());
-        values.put(COLUMN_NAME_RESTAURANT_ID, card.getLocationReference());
+        values.put(COLUMN_NAME_DISH_ID, card.getDishId());
+        values.put(COLUMN_NAME_RESTAURANT_ID, card.getLocationId());
         values.put(COLUMN_NAME_DISH, card.getDish());
         values.put(COLUMN_NAME_IMAGE_NAME, card.getImageName());
         values.put(COLUMN_NAME_LOCATION_NAME, card.getLocationName());
@@ -167,7 +164,7 @@ public class DishesDataSource {
 //        while(!cursor.isAfterLast()) {
 //            cardMemo = cursorToCardMemo(cursor);
 //            ratingMemoList.add(ratingMemo);
-//            Log.d(TAG, "Gericht ID: " + ratingMemo.getReference());
+//            Log.d(TAG, "Gericht ID: " + ratingMemo.getDishId());
 //            cursor.moveToNext();
 //        }
 //

@@ -19,12 +19,14 @@ public class Card {
 
     // Attached information
     private Location location;
-    private String reference;
-    private String locationReference;
+    private String dishId;
+    private String locationId;
     private String imageName;
 
-    public Card(String reference, Location location, Drawable image, String dish, String locationName, double distance, int pricing) {
-        this.reference = reference;
+    public Card() {}
+
+    public Card(String dishId, Location location, Drawable image, String dish, String locationName, double distance, int pricing) {
+        this.dishId = dishId;
         this.location = location;
         this.image = image;
         this.dish = dish;
@@ -33,8 +35,8 @@ public class Card {
         this.pricing = pricing;
     }
 
-    public Card(String reference, Location location, Context context, int imageId, String dish, String locationName, double distance, int pricing) {
-        this.reference = reference;
+    public Card(String dishId, Location location, Context context, int imageId, String dish, String locationName, double distance, int pricing) {
+        this.dishId = dishId;
         this.location = location;
         this.image = ContextCompat.getDrawable(context, imageId);
         this.dish = dish;
@@ -52,12 +54,12 @@ public class Card {
         this.location = location;
     }
 
-    public String getReference() {
-        return reference;
+    public String getDishId() {
+        return dishId;
     }
 
-    public void setReference(String reference) {
-        this.reference = reference;
+    public void setDishId(String dishId) {
+        this.dishId = dishId;
     }
 
     public String getDish() {
@@ -100,12 +102,12 @@ public class Card {
         this.image = image;
     }
 
-    public String getLocationReference() {
-        return locationReference;
+    public String getLocationId() {
+        return locationId;
     }
 
-    public void setLocationReference(String locationReference) {
-        this.locationReference = locationReference;
+    public void setLocationId(String locationId) {
+        this.locationId = locationId;
     }
 
     public String getImageName() {

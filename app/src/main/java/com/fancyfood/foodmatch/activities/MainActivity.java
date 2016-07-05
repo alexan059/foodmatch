@@ -3,9 +3,7 @@ package com.fancyfood.foodmatch.activities;
 import android.Manifest;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -16,7 +14,6 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.NavigationView.OnNavigationItemSelectedListener;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.SwitchCompat;
@@ -32,55 +29,42 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.fancyfood.foodmatch.data.DishesDataSource;
+import com.fancyfood.foodmatch.helpers.DataSourceHelper;
+import com.fancyfood.foodmatch.modules.SwipeCards;
 import com.fancyfood.foodmatch.preferences.Constants;
 import com.fancyfood.foodmatch.core.CoreActivity;
 import com.fancyfood.foodmatch.core.CoreApplication;
 import com.fancyfood.foodmatch.R;
 import com.fancyfood.foodmatch.adapters.CardAdapter;
-import com.fancyfood.foodmatch.data.RatingsDataSource;
 import com.fancyfood.foodmatch.fragments.RadiusDialogFragment;
 import com.fancyfood.foodmatch.fragments.RadiusDialogFragment.RadiusDialogListener;
 import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper;
 import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper.OnLocationChangedListener;
 import com.fancyfood.foodmatch.models.Card;
-import com.fancyfood.foodmatch.models.Rating;
-import com.fancyfood.foodmatch.services.CardReciever;
+import com.fancyfood.foodmatch.preferences.Preferences;
+import com.fancyfood.foodmatch.services.CardsReciever;
 import com.fancyfood.foodmatch.services.CardsPullService;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static android.view.View.OnClickListener;
 import static android.view.View.OnTouchListener;
 
 public class MainActivity extends CoreActivity implements OnClickListener, OnTouchListener,
-        OnCheckedChangeListener, OnLocationChangedListener, OnNavigationItemSelectedListener, RadiusDialogListener,
-        CardReciever.OnDataReceiveListener {
+        OnLocationChangedListener, RadiusDialogListener, CardsReciever.OnDataReceiveListener, SwipeCards.OnFlingCallbackListener {
 
     // Debug Tag
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    // Shared Preferences
-    public static final String FOODMATCH_PREFERENCES = "com.fancyfood.foodmatch.preferences";
-
-    // Defaults
-    public static final int DEFAULT_RADIUS = 5;
+    // Database connection
+    DataSourceHelper database;
 
     // Views
     private SwitchCompat modeSwitch;
     private ProgressBar progressBar;
 
-    // Rating cards
-    private CardAdapter cardAdapter;
-    private ArrayList<Card> al;
-    private SwipeFlingAdapterView flingContainer;
-    private RatingsDataSource dataSource;
-    private DishesDataSource dishesDataSource;
+    private SwipeCards swipeCards;
 
     // Location and radius settings
     private GoogleApiLocationHelper locationHelper;
@@ -88,9 +72,9 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     private int radius;
 
     // Flags
-    private boolean flingStarted = false;
     private boolean eatMode = false;
     private boolean switchTouched = false;
+    private boolean collapsed = false;
 
     /* Activity Lifecycle */
 
@@ -99,39 +83,31 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         super.onCreate(savedInstanceState);
         inflateView(R.layout.activity_main);
 
-        initButtons();
-
-        // Get Switch Compat
-        modeSwitch = (SwitchCompat) getMenu().findItem(R.id.nav_switch)
-                .getActionView().findViewById(R.id.switch_compat);
-        modeSwitch.setOnTouchListener(this);
-        modeSwitch.setOnCheckedChangeListener(this);
-
-        // Set navigation
-        getNavigation().setNavigationItemSelectedListener(this);
+        // Initialize all buttons, menus and switches
+        initializeUserActionListener();
 
         // Restore preferences
-        SharedPreferences settings = getSharedPreferences(FOODMATCH_PREFERENCES, 0);
-        radius = settings.getInt("foodRadius", DEFAULT_RADIUS);
+        radius = Preferences.getRadius(this);
 
         // Progress bar
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
 
-        // Init Database
-        dataSource = new RatingsDataSource(this);
-        Log.d(TAG, "Die Datenquelle wird geöffnet.");
-        dataSource.open();
+        // Get database helper
+        database = new DataSourceHelper(this);
 
-        dishesDataSource = new DishesDataSource(this);
-
+        // Start location change listener
         if (CoreApplication.getGoogleApiHelper() != null) {
             locationHelper = CoreApplication.getGoogleApiHelper();
             locationHelper.setOnLocationChangedListener(this);
         }
 
-        IntentFilter filter = new IntentFilter(Constants.BROADCAST_ACTION);
-        CardReciever reciever = new CardReciever(this);
-        LocalBroadcastManager.getInstance(this).registerReceiver(reciever, filter);
+        // Initialize cards container
+        SwipeFlingAdapterView cardsContainer = (SwipeFlingAdapterView) findViewById(R.id.rating_cards);
+        swipeCards = new SwipeCards(this, cardsContainer);
+        swipeCards.setOnFlingCallbackListener(this);
+
+        // Set intent filter for receiving data
+        setIntentFilter();
     }
 
     @Override
@@ -151,14 +127,16 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
             locationHelper.disconnect();
         }
 
-        // Store changed preferences
-        SharedPreferences settings = getSharedPreferences(FOODMATCH_PREFERENCES, 0);
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putInt("foodRadius", radius);
-        editor.apply();
+        Preferences.storeRadius(this, radius);
     }
 
-    /* IntentService for getting data */
+    /* IntentService for receiving data */
+
+    private void setIntentFilter() {
+        IntentFilter filter = new IntentFilter(Constants.BROADCAST_ACTION);
+        CardsReciever reciever = new CardsReciever(this);
+        LocalBroadcastManager.getInstance(this).registerReceiver(reciever, filter);
+    }
 
     private void startDataService() {
         // "restaurants/55.56/57.6/2000" -> resource/lat/lng/radius
@@ -176,12 +154,34 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
     @Override
     public void onDataReceive() {
-        Card card = dishesDataSource.getFirstData();
-        al.add(card);
-        cardAdapter.notifyDataSetChanged();
+        ArrayList<Card> cardsList = new ArrayList<>();
+        cardsList.add(database.getCard());
+        swipeCards.appendCards(cardsList);
+        //Card card = dishesDataSource.getFirstData();
+        //cards.add(card);
+        //cardAdapter.notifyDataSetChanged();
     }
 
     /* Google Api Helper and Location Listener */
+
+    @Override
+    public void startMapsActivity(Card card) {
+        if (eatMode) {
+            // Create new intent for MapsActivity
+            Intent i = new Intent(MainActivity.this, MapsActivity.class);
+
+            // Get location from card
+            double lat = card.getLocation().getLatitude();
+            double lng = card.getLocation().getLongitude();
+
+            // Put coordinates as extra data for MapsActivity
+            i.putExtra("Lat", lat);
+            i.putExtra("Lng", lng);
+
+            // Start MapsActivity
+            startActivity(i);
+        }
+    }
 
     @Override
     public void onLocationChanged(Location location) {
@@ -216,7 +216,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
     /* Async Task */
 
-    public class LoadCardsTask extends AsyncTask<String, String, String> {
+    public class WaitForLoactionTask extends AsyncTask<String, String, String> {
         @Override
         protected String doInBackground(String... params) {
             while (currentLocation == null) {
@@ -228,7 +228,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
         @Override
         protected void onPostExecute(String s) {
-            initFling();
+            //initFling();
+            startDataService();
             displayUI();
             progressBar.setVisibility(View.INVISIBLE);
         }
@@ -237,11 +238,46 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     /* Helper methods */
 
     private void initTasks() {
-        LoadCardsTask task = new LoadCardsTask();
+        WaitForLoactionTask task = new WaitForLoactionTask();
         task.execute();
     }
 
-    public void initButtons() {
+    public void initializeUserActionListener() {
+        // Set navigation
+        getNavigation().setNavigationItemSelectedListener(new OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(MenuItem item) {
+                switch(item.getItemId()) {
+                    case R.id.nav_radius:
+                        RadiusDialogFragment dialog = new RadiusDialogFragment();
+                        dialog.setRadius(radius);
+                        dialog.show(getFragmentManager(), RadiusDialogFragment.class.getSimpleName());
+                        break;
+                    case R.id.nav_settings:
+                        break;
+                }
+
+                return false;
+            }
+        });
+
+        // Get Switch Compat
+        modeSwitch = (SwitchCompat) getMenu().findItem(R.id.nav_switch)
+                .getActionView().findViewById(R.id.switch_compat);
+        modeSwitch.setOnTouchListener(this);
+        modeSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (switchTouched) {
+                    switchTouched = false;
+                    eatMode = isChecked;
+
+                    Toast.makeText(getApplicationContext(), "\"Sofort essen\" wurde " + (!isChecked ? "de":"") + "aktiviert.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        // Set buttons
         final Button btHungry = (Button) findViewById(R.id.btHungry);
         final Button btDiscover = (Button) findViewById(R.id.btDiscover);
         final Button btLike = (Button) findViewById(R.id.btLike);
@@ -263,87 +299,6 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                 btLike.setStateListAnimator(null);
                 btDislike.setStateListAnimator(null);
             }
-        }
-    }
-
-    final public void initFling() {
-        // Stop if already started or location isn't ready
-        if (flingStarted || currentLocation == null)
-            return;
-
-        // Find the Fling Container
-        flingContainer = (SwipeFlingAdapterView) findViewById(R.id.rating_cards);
-
-        // Initialize Card List
-        al = new ArrayList<>();
-        // Connect layout to Card List with Card Adapter
-        cardAdapter = new CardAdapter(this, R.layout.card_item, al);
-
-        if (flingContainer != null) {
-            // Pass Card Adapter to Fling Container
-            flingContainer.setAdapter(cardAdapter);
-
-            // Implement Interface Methods to handle actions
-            flingContainer.setFlingListener(new SwipeFlingAdapterView.onFlingListener() {
-                @Override
-                public void removeFirstObjectInAdapter() {
-                    al.remove(0); // Remove first object in adapter
-                    cardAdapter.notifyDataSetChanged();
-                }
-
-                @Override
-                public void onLeftCardExit(Object dataObject) {
-                    // Item disliked
-                    Card currentCard = (Card) dataObject;
-                    insertRating(currentCard, false);
-                }
-
-                @Override
-                public void onRightCardExit(Object dataObject) {
-                    // Item liked
-                    Card currentCard = (Card) dataObject;
-                    insertRating(currentCard, true);
-
-                    if (eatMode) {
-                        // Method to change Activity ->get MapsActivity
-                        Intent i = new Intent(MainActivity.this, MapsActivity.class);
-
-                        double lat = currentCard.getLocation().getLatitude();
-                        double lng = currentCard.getLocation().getLongitude();
-
-                        // Add data to Intent to use them in MapActivity
-                        i.putExtra("Lat", lat);
-                        i.putExtra("Lng", lng);
-
-                        // StartMapsActivity
-                        startActivity(i);
-                    }
-                }
-
-                @Override
-                public void onAdapterAboutToEmpty(int itemsInAdapter) {
-                    // Ask for more data here
-                    if (itemsInAdapter < 1)
-                        startDataService();
-                }
-
-                @Override
-                public void onScroll(float v) {
-
-                }
-            });
-
-            flingContainer.setOnItemClickListener(new SwipeFlingAdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClicked(int itemPosition, Object dataObject) {
-
-                }
-            });
-
-            flingStarted = true;
-
-            startDataService();
-
         }
     }
 
@@ -382,6 +337,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                     appBarLayout.requestLayout();
                     appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
 
+                    collapsed = true;
                     initTasks();
                 }
 
@@ -394,29 +350,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         });
     }
 
-    private void insertRating(Card card, boolean rating) {
-        //--------------------------------------------------------------------------
-        //FOR DATABASE
-        //Cast dataObject to Card to use get and set methods
-        Rating newRating = new Rating(card.getReference(), rating, card.getLocation(), null);
-
-        //write data to database
-        Rating ratingMemo = dataSource.createRating(newRating);
-
-        //only for testing purposes
-        Log.d(TAG, "Es wurde der folgende Eintrag in die Datenbank geschrieben:");
-        Log.d(TAG, "Gericht: " + ratingMemo.getReference());
-        //testing getting all elements from database
-        List<Rating> InhaltDB = dataSource.getAllRatingMemos();
-        Log.d(TAG, "number of element in the DB: " + InhaltDB.size());
-        //--------------------------------------------------------------------------
-    }
-
-    /* View Helper */
-
     private void displayUI() {
-        flingContainer.setVisibility(View.VISIBLE);
-        flingContainer.animate().alpha(1).setDuration(200);
+        swipeCards.display();
 
         Button btLike = (Button) findViewById(R.id.btLike);
         Button btDislike = (Button) findViewById(R.id.btDislike);
@@ -425,64 +360,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         btDislike.setVisibility(View.VISIBLE);
         btDislike.animate().alpha(1).setDuration(200);
 
-        flingContainer.requestLayout();
     }
-
-//    /* Dummy data */
-//
-//    /**
-//     * Short version to get drawable from resource id.
-//     *
-//     * @param imageId
-//     * @return
-//     */
-//    public Drawable getSupportDrawable(int imageId) {
-//        return ContextCompat.getDrawable(getApplicationContext(), imageId);
-//    }
-//
-//    /**
-//     * Add some dummy data to Card List.
-//     */
-//    public void addDummy() {
-//        if (al != null) {
-//            al.add(new Card(md5("1"), currentLocation, getSupportDrawable(R.drawable.currywurst), "Currywurst", "Curry 36 - Kreuzberg", 1050.5, 1));
-//            al.add(new Card(md5("2"), currentLocation, getSupportDrawable(R.drawable.fishnchips), "Fish'n'Chips", "Nordsee - Alexa", 440, 1));
-//            al.add(new Card(md5("3"), currentLocation, getSupportDrawable(R.drawable.hamburger), "Hamburger", "Kreuzburger - Prenzlauer Berg", 600.8, 1));
-//            al.add(new Card(md5("4"), currentLocation, getSupportDrawable(R.drawable.lasagna), "Lasagne", "Picasso - Mitte", 300, 2));
-//            al.add(new Card(md5("5"), currentLocation, getSupportDrawable(R.drawable.pizza), "Pizza", "Livoro - Prenzlauer Berg", 400, 2));
-//            al.add(new Card(md5("6"), currentLocation, getSupportDrawable(R.drawable.springrolls), "Frühligsrollen", "Vietnam Village - Mitte", 450, 1));
-//            al.add(new Card(md5("7"), currentLocation, getSupportDrawable(R.drawable.steak), "Steak", "Blockhouse - Zoo", 2005, 2));
-//            al.add(new Card(md5("8"), currentLocation, getSupportDrawable(R.drawable.sushi), "Sushi", "Sushi Circle - Zehelndorf", 4000, 3));
-//
-//            //shuffle List for randomize picture order
-//            Collections.shuffle(al);
-//        }
-//    }
-//
-//    public static String md5(final String s) {
-//        final String MD5 = "MD5";
-//        try {
-//            // Create MD5 Hash
-//            MessageDigest digest = java.security.MessageDigest
-//                    .getInstance(MD5);
-//            digest.update(s.getBytes());
-//            byte messageDigest[] = digest.digest();
-//
-//            // Create Hex String
-//            StringBuilder hexString = new StringBuilder();
-//            for (byte aMessageDigest : messageDigest) {
-//                String h = Integer.toHexString(0xFF & aMessageDigest);
-//                while (h.length() < 2)
-//                    h = "0" + h;
-//                hexString.append(h);
-//            }
-//            return hexString.toString();
-//
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        }
-//        return "";
-//    }
 
     /* On touch and on click listener */
 
@@ -497,10 +375,10 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                 collapseToolbar();
                 break;
             case R.id.btLike:
-                flingContainer.getTopCardListener().selectRight();
+                swipeCards.selectRight();
                 break;
             case R.id.btDislike:
-                flingContainer.getTopCardListener().selectLeft();
+                swipeCards.selectLeft();
                 break;
         }
 
@@ -511,7 +389,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
         if (v.getId() == R.id.switch_compat) {
             switchTouched = true;
-            if (!flingStarted) collapseToolbar();
+            if (!collapsed) collapseToolbar();
         } else {
             int action = MotionEventCompat.getActionMasked(event);
 
@@ -524,38 +402,11 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         return false;
     }
 
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        if (switchTouched) {
-            switchTouched = false;
-            eatMode = isChecked;
-
-            Toast.makeText(this, "\"Sofort essen\" wurde " + (!isChecked ? "de":"") + "aktiviert.", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-
-        switch(item.getItemId()) {
-            case R.id.nav_radius:
-                RadiusDialogFragment dialog = new RadiusDialogFragment();
-                dialog.setRadius(radius);
-                dialog.show(getFragmentManager(), RadiusDialogFragment.class.getSimpleName());
-                break;
-            case R.id.nav_settings:
-                break;
-        }
-
-        return false;
-    }
-
     /* Radius Dialog Listener */
 
     @Override
     public void onDialogPositiveClick(RadiusDialogFragment dialog) {
         radius = dialog.getRadius();
-        Log.d(TAG, "Radius set: " + Integer.toString(radius) + "00 m");
     }
 
 }

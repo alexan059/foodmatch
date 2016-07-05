@@ -34,6 +34,7 @@ public final class DishesContract {
         public static final String COLUMN_NAME_LAT = "lat";
         public static final String COLUMN_NAME_LNG = "lng";
         public static final String COLUMN_NAME_CONSUMED = "consumed";
+        public static final String COLUMN_NAME_UPDATED_AT = "updated_at";
         public static final String COLUMN_NAME_CREATED_AT = "created_at";
 
         public static final String SQL_CREATE_ENTRIES =
@@ -49,6 +50,7 @@ public final class DishesContract {
                         + DishEntry.COLUMN_NAME_LAT           + DOUBLE_TYPE   + NOT_NULL      + COMMA_SEP
                         + DishEntry.COLUMN_NAME_LNG           + DOUBLE_TYPE   + NOT_NULL      + COMMA_SEP
                         + DishEntry.COLUMN_NAME_CONSUMED      + BOOLEAN_TYPE  + NOT_NULL      + COMMA_SEP
+                        + DishEntry.COLUMN_NAME_UPDATED_AT    + TIMESTAMP_TYPE + " DEFAULT CURRENT_TIMESTAMP ON UPDATED CURRENT_TIMESTAMP" + NOT_NULL
                         + DishEntry.COLUMN_NAME_CREATED_AT    + TIMESTAMP_TYPE + " DEFAULT CURRENT_TIMESTAMP" + NOT_NULL
                         + " );";
 

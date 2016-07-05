@@ -3,14 +3,14 @@ package com.fancyfood.foodmatch.services;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.widget.Toast;
 
-import com.fancyfood.foodmatch.activities.MainActivity;
 import com.fancyfood.foodmatch.preferences.Constants;
 
-public class CardReciever extends BroadcastReceiver {
+public class CardsReciever extends BroadcastReceiver {
 
-    private static final String TAG = CardReciever.class.getSimpleName();
+    private static final String TAG = CardsReciever.class.getSimpleName();
 
     public interface OnDataReceiveListener {
         void onDataReceive();
@@ -18,7 +18,7 @@ public class CardReciever extends BroadcastReceiver {
 
     private OnDataReceiveListener listener;
 
-    public CardReciever(OnDataReceiveListener listener) {
+    public CardsReciever(OnDataReceiveListener listener) {
         this.listener = listener;
     }
 
@@ -28,11 +28,13 @@ public class CardReciever extends BroadcastReceiver {
 
         switch (status) {
             case Constants.DATA_RECEIVED:
-                Toast.makeText(context, "Ergebnisse erhalten.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Ergebnisse erhalten", Toast.LENGTH_SHORT).show();
                 listener.onDataReceive();
                 break;
+            case Constants.DATA_PARSE_ERROR:
+                Log.d(TAG, "Parse Error - JSON Data Format not valid.");
             case Constants.DATA_NO_RESULTS:
-                Toast.makeText(context, "Keine Ergebnisse.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Keine Ergebnisse", Toast.LENGTH_SHORT).show();
                 break;
         }
     }
