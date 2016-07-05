@@ -32,7 +32,8 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.fancyfood.foodmatch.Constants;
+import com.fancyfood.foodmatch.data.DishesDataSource;
+import com.fancyfood.foodmatch.preferences.Constants;
 import com.fancyfood.foodmatch.core.CoreActivity;
 import com.fancyfood.foodmatch.core.CoreApplication;
 import com.fancyfood.foodmatch.R;
@@ -58,7 +59,8 @@ import static android.view.View.OnClickListener;
 import static android.view.View.OnTouchListener;
 
 public class MainActivity extends CoreActivity implements OnClickListener, OnTouchListener,
-        OnCheckedChangeListener, OnLocationChangedListener, OnNavigationItemSelectedListener, RadiusDialogListener {
+        OnCheckedChangeListener, OnLocationChangedListener, OnNavigationItemSelectedListener, RadiusDialogListener,
+        CardReciever.OnDataReceiveListener {
 
     // Debug Tag
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -78,6 +80,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     private ArrayList<Card> al;
     private SwipeFlingAdapterView flingContainer;
     private RatingsDataSource dataSource;
+    private DishesDataSource dishesDataSource;
 
     // Location and radius settings
     private GoogleApiLocationHelper locationHelper;
@@ -119,18 +122,15 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         Log.d(TAG, "Die Datenquelle wird geöffnet.");
         dataSource.open();
 
+        dishesDataSource = new DishesDataSource(this);
+
         if (CoreApplication.getGoogleApiHelper() != null) {
             locationHelper = CoreApplication.getGoogleApiHelper();
             locationHelper.setOnLocationChangedListener(this);
         }
 
-        // "restaurants/55.56/57.6/2000" -> resource/lat/lng/radius
-        Intent intent = new Intent(this, CardsPullService.class);
-        intent.setData(Uri.parse("restaurants"));
-        startService(intent);
-
         IntentFilter filter = new IntentFilter(Constants.BROADCAST_ACTION);
-        CardReciever reciever = new CardReciever();
+        CardReciever reciever = new CardReciever(this);
         LocalBroadcastManager.getInstance(this).registerReceiver(reciever, filter);
     }
 
@@ -156,6 +156,29 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         SharedPreferences.Editor editor = settings.edit();
         editor.putInt("foodRadius", radius);
         editor.apply();
+    }
+
+    /* IntentService for getting data */
+
+    private void startDataService() {
+        // "restaurants/55.56/57.6/2000" -> resource/lat/lng/radius
+        // http://api.collective-art.de/restaurants/13.5264438/52.4569312/2000?pretty&token=n5DUfSC72hPABeEhu89Ex63soJ2oJCQfTxlim8MC6oHVLlrutMa3xDjDursL
+        String lat = "13.5264438"; //Double.toString(currentLocation.getLatitude());
+        String lng = "52.4569312"; //Double.toString(currentLocation.getLongitude());
+        String rad = "2000"; //Integer.toString(radius) + "00";
+
+        String uri = "restaurants/" + lat + "/" + lng + "/" + rad;
+
+        Intent intent = new Intent(this, CardsPullService.class);
+        intent.setData(Uri.parse(uri));
+        startService(intent);
+    }
+
+    @Override
+    public void onDataReceive() {
+        Card card = dishesDataSource.getFirstData();
+        al.add(card);
+        cardAdapter.notifyDataSetChanged();
     }
 
     /* Google Api Helper and Location Listener */
@@ -252,9 +275,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         flingContainer = (SwipeFlingAdapterView) findViewById(R.id.rating_cards);
 
         // Initialize Card List
-        al = new ArrayList<Card>();
-        // Add dummy data to Card List
-        addDummy();
+        al = new ArrayList<>();
         // Connect layout to Card List with Card Adapter
         cardAdapter = new CardAdapter(this, R.layout.card_item, al);
 
@@ -302,8 +323,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                 @Override
                 public void onAdapterAboutToEmpty(int itemsInAdapter) {
                     // Ask for more data here
-                    addDummy();
-                    cardAdapter.notifyDataSetChanged();
+                    if (itemsInAdapter < 1)
+                        startDataService();
                 }
 
                 @Override
@@ -320,6 +341,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
             });
 
             flingStarted = true;
+
+            startDataService();
 
         }
     }
@@ -405,61 +428,61 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         flingContainer.requestLayout();
     }
 
-    /* Dummy data */
-
-    /**
-     * Short version to get drawable from resource id.
-     *
-     * @param imageId
-     * @return
-     */
-    public Drawable getSupportDrawable(int imageId) {
-        return ContextCompat.getDrawable(getApplicationContext(), imageId);
-    }
-
-    /**
-     * Add some dummy data to Card List.
-     */
-    public void addDummy() {
-        if (al != null) {
-            al.add(new Card(md5("1"), currentLocation, getSupportDrawable(R.drawable.currywurst), "Currywurst", "Curry 36 - Kreuzberg", 1050.5, 1));
-            al.add(new Card(md5("2"), currentLocation, getSupportDrawable(R.drawable.fishnchips), "Fish'n'Chips", "Nordsee - Alexa", 440, 1));
-            al.add(new Card(md5("3"), currentLocation, getSupportDrawable(R.drawable.hamburger), "Hamburger", "Kreuzburger - Prenzlauer Berg", 600.8, 1));
-            al.add(new Card(md5("4"), currentLocation, getSupportDrawable(R.drawable.lasagna), "Lasagne", "Picasso - Mitte", 300, 2));
-            al.add(new Card(md5("5"), currentLocation, getSupportDrawable(R.drawable.pizza), "Pizza", "Livoro - Prenzlauer Berg", 400, 2));
-            al.add(new Card(md5("6"), currentLocation, getSupportDrawable(R.drawable.springrolls), "Frühligsrollen", "Vietnam Village - Mitte", 450, 1));
-            al.add(new Card(md5("7"), currentLocation, getSupportDrawable(R.drawable.steak), "Steak", "Blockhouse - Zoo", 2005, 2));
-            al.add(new Card(md5("8"), currentLocation, getSupportDrawable(R.drawable.sushi), "Sushi", "Sushi Circle - Zehelndorf", 4000, 3));
-
-            //shuffle List for randomize picture order
-            Collections.shuffle(al);
-        }
-    }
-
-    public static String md5(final String s) {
-        final String MD5 = "MD5";
-        try {
-            // Create MD5 Hash
-            MessageDigest digest = java.security.MessageDigest
-                    .getInstance(MD5);
-            digest.update(s.getBytes());
-            byte messageDigest[] = digest.digest();
-
-            // Create Hex String
-            StringBuilder hexString = new StringBuilder();
-            for (byte aMessageDigest : messageDigest) {
-                String h = Integer.toHexString(0xFF & aMessageDigest);
-                while (h.length() < 2)
-                    h = "0" + h;
-                hexString.append(h);
-            }
-            return hexString.toString();
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
+//    /* Dummy data */
+//
+//    /**
+//     * Short version to get drawable from resource id.
+//     *
+//     * @param imageId
+//     * @return
+//     */
+//    public Drawable getSupportDrawable(int imageId) {
+//        return ContextCompat.getDrawable(getApplicationContext(), imageId);
+//    }
+//
+//    /**
+//     * Add some dummy data to Card List.
+//     */
+//    public void addDummy() {
+//        if (al != null) {
+//            al.add(new Card(md5("1"), currentLocation, getSupportDrawable(R.drawable.currywurst), "Currywurst", "Curry 36 - Kreuzberg", 1050.5, 1));
+//            al.add(new Card(md5("2"), currentLocation, getSupportDrawable(R.drawable.fishnchips), "Fish'n'Chips", "Nordsee - Alexa", 440, 1));
+//            al.add(new Card(md5("3"), currentLocation, getSupportDrawable(R.drawable.hamburger), "Hamburger", "Kreuzburger - Prenzlauer Berg", 600.8, 1));
+//            al.add(new Card(md5("4"), currentLocation, getSupportDrawable(R.drawable.lasagna), "Lasagne", "Picasso - Mitte", 300, 2));
+//            al.add(new Card(md5("5"), currentLocation, getSupportDrawable(R.drawable.pizza), "Pizza", "Livoro - Prenzlauer Berg", 400, 2));
+//            al.add(new Card(md5("6"), currentLocation, getSupportDrawable(R.drawable.springrolls), "Frühligsrollen", "Vietnam Village - Mitte", 450, 1));
+//            al.add(new Card(md5("7"), currentLocation, getSupportDrawable(R.drawable.steak), "Steak", "Blockhouse - Zoo", 2005, 2));
+//            al.add(new Card(md5("8"), currentLocation, getSupportDrawable(R.drawable.sushi), "Sushi", "Sushi Circle - Zehelndorf", 4000, 3));
+//
+//            //shuffle List for randomize picture order
+//            Collections.shuffle(al);
+//        }
+//    }
+//
+//    public static String md5(final String s) {
+//        final String MD5 = "MD5";
+//        try {
+//            // Create MD5 Hash
+//            MessageDigest digest = java.security.MessageDigest
+//                    .getInstance(MD5);
+//            digest.update(s.getBytes());
+//            byte messageDigest[] = digest.digest();
+//
+//            // Create Hex String
+//            StringBuilder hexString = new StringBuilder();
+//            for (byte aMessageDigest : messageDigest) {
+//                String h = Integer.toHexString(0xFF & aMessageDigest);
+//                while (h.length() < 2)
+//                    h = "0" + h;
+//                hexString.append(h);
+//            }
+//            return hexString.toString();
+//
+//        } catch (NoSuchAlgorithmException e) {
+//            e.printStackTrace();
+//        }
+//        return "";
+//    }
 
     /* On touch and on click listener */
 

@@ -12,57 +12,61 @@ import com.fancyfood.foodmatch.models.Rating;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Carolina on 26.06.2016.
- */
+import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry._ID;
+import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry.COLUMN_NAME_CREATED_AT;
+import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry.COLUMN_NAME_DISH_ID;
+import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry.COLUMN_NAME_LAT;
+import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry.COLUMN_NAME_LNG;
+import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry.COLUMN_NAME_RATING;
+
 public class RatingsDataSource {
 
-    private static final String LOG_TAG = RatingsDataSource.class.getSimpleName();
+    private static final String TAG = RatingsDataSource.class.getSimpleName();
 
     private SQLiteDatabase database;
-    private RatingsDbHelper dbHelper;
+    private DatabaseHelper dbHelper;
 
     private String[] columns = {
-            RatingsContract.RatingEntry._ID,
-            RatingsContract.RatingEntry.COLUMN_NAME_DISH_ID,
-            RatingsContract.RatingEntry.COLUMN_NAME_RATING,
-            RatingsContract.RatingEntry.COLUMN_NAME_LAT,
-            RatingsContract.RatingEntry.COLUMN_NAME_LNG,
-            RatingsContract.RatingEntry.COLUMN_NAME_CREATED_AT
+            _ID,
+            COLUMN_NAME_DISH_ID,
+            COLUMN_NAME_RATING,
+            COLUMN_NAME_LAT,
+            COLUMN_NAME_LNG,
+            COLUMN_NAME_CREATED_AT
     };
 
 
     public RatingsDataSource(Context context) {
-        Log.d(LOG_TAG, "Unsere DataSource erzeugt jetzt den dbHelper.");
-        dbHelper = new RatingsDbHelper(context);
+        Log.d(TAG, "Unsere DataSource erzeugt jetzt den dbHelper.");
+        dbHelper = new DatabaseHelper(context);
     }
 
     public void open() {
         //open() and close() connection to the database
-        Log.d(LOG_TAG, "Eine Referenz auf die Datenbank wird jetzt angefragt.");
+        Log.d(TAG, "Eine Referenz auf die Datenbank wird jetzt angefragt.");
         //getWritableDatabase();  open and write db
         database = dbHelper.getWritableDatabase();
-        Log.d(LOG_TAG, "Datenbank-Referenz erhalten. Pfad zur Datenbank: " + database.getPath());
+        Log.d(TAG, "Datenbank-Referenz erhalten. Pfad zur Datenbank: " + database.getPath());
     }
 
     public void close() {
         dbHelper.close();
-        Log.d(LOG_TAG, "Datenbank mit Hilfe des DbHelpers geschlossen.");
+        Log.d(TAG, "Datenbank mit Hilfe des DbHelpers geschlossen.");
     }
 
     public Rating createRating(Rating rating) {
         ContentValues values = new ContentValues();
 
-        values.put(RatingsContract.RatingEntry.COLUMN_NAME_DISH_ID, rating.getReference());
-        values.put(RatingsContract.RatingEntry.COLUMN_NAME_RATING, rating.getRating());
-        values.put(RatingsContract.RatingEntry.COLUMN_NAME_LAT, rating.getLocation().getLatitude());
-        values.put(RatingsContract.RatingEntry.COLUMN_NAME_LNG, rating.getLocation().getLongitude());
+        values.put(COLUMN_NAME_DISH_ID, rating.getReference());
+        values.put(COLUMN_NAME_RATING, rating.getRating());
+        values.put(COLUMN_NAME_LAT, rating.getLocation().getLatitude());
+        values.put(COLUMN_NAME_LNG, rating.getLocation().getLongitude());
 
         //write data in the database/ table
         long insertId = database.insert(RatingsContract.RatingEntry.TABLE_NAME, null, values);
 
         Cursor cursor = database.query(RatingsContract.RatingEntry.TABLE_NAME,columns,
-                RatingsContract.RatingEntry._ID + "=" + insertId, null, null, null, null);
+                _ID + "=" + insertId, null, null, null, null);
 
         cursor.moveToFirst();
         Rating ratingMemo = cursorToRatingMemo(cursor);
@@ -84,7 +88,7 @@ public class RatingsDataSource {
         while(!cursor.isAfterLast()) {
             ratingMemo = cursorToRatingMemo(cursor);
             ratingMemoList.add(ratingMemo);
-            Log.d(LOG_TAG, "Gericht ID: " + ratingMemo.getReference());
+            Log.d(TAG, "Gericht ID: " + ratingMemo.getReference());
             cursor.moveToNext();
         }
 
@@ -96,11 +100,11 @@ public class RatingsDataSource {
     //method to convert cursor to card
     private Rating cursorToRatingMemo(Cursor cursor) {
 
-        int idDishID = cursor.getColumnIndex(RatingsContract.RatingEntry.COLUMN_NAME_DISH_ID);
-        int idRating = cursor.getColumnIndex(RatingsContract.RatingEntry.COLUMN_NAME_DISH_ID);
-        int idCreatedAt = cursor.getColumnIndex(RatingsContract.RatingEntry.COLUMN_NAME_CREATED_AT);
-        int idLat = cursor.getColumnIndex(RatingsContract.RatingEntry.COLUMN_NAME_LAT);
-        int idLng = cursor.getColumnIndex(RatingsContract.RatingEntry.COLUMN_NAME_LNG);
+        int idDishID = cursor.getColumnIndex(COLUMN_NAME_DISH_ID);
+        int idRating = cursor.getColumnIndex(COLUMN_NAME_DISH_ID);
+        int idCreatedAt = cursor.getColumnIndex(COLUMN_NAME_CREATED_AT);
+        int idLat = cursor.getColumnIndex(COLUMN_NAME_LAT);
+        int idLng = cursor.getColumnIndex(COLUMN_NAME_LNG);
 
         String id = cursor.getString(idDishID);
         boolean rating = (cursor.getInt(idRating) == 1);
@@ -109,7 +113,7 @@ public class RatingsDataSource {
         location.setLongitude(cursor.getFloat(idLng));
         String createdAt = cursor.getString(idCreatedAt);
 
-        Log.d(LOG_TAG, "gespeichert am: " + createdAt);
+        Log.d(TAG, "gespeichert am: " + createdAt);
 
         return new Rating(id,rating,location,createdAt);
 

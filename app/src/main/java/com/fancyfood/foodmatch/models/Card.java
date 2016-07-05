@@ -20,6 +20,8 @@ public class Card {
     // Attached information
     private Location location;
     private String reference;
+    private String locationReference;
+    private String imageName;
 
     public Card(String reference, Location location, Drawable image, String dish, String locationName, double distance, int pricing) {
         this.reference = reference;
@@ -96,5 +98,21 @@ public class Card {
 
     public void setImage(Drawable image) {
         this.image = image;
+    }
+
+    public String getLocationReference() {
+        return locationReference;
+    }
+
+    public void setLocationReference(String locationReference) {
+        this.locationReference = locationReference;
+    }
+
+    public String getImageName() {
+        return imageName;
+    }
+
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
     }
 }
