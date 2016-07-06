@@ -78,7 +78,7 @@ public class DishesDataSource {
         values.put(COLUMN_NAME_PRICING, card.getPricing());
         values.put(COLUMN_NAME_LAT, card.getLocation().getLatitude());
         values.put(COLUMN_NAME_LNG, card.getLocation().getLongitude());
-        values.put(COLUMN_NAME_CONSUMED, 0);
+        values.put(COLUMN_NAME_CONSUMED, String.valueOf(0));
 
         // Insert values
         db.insert(TABLE_NAME, null, values);
@@ -90,7 +90,10 @@ public class DishesDataSource {
     public ArrayList<Card> getAllDishes(int limit) {
         db = dbHelper.getReadableDatabase();
 
-        Cursor cursor = db.query(TABLE_NAME, columns, null, null, null, null, null);
+        String selection = COLUMN_NAME_CONSUMED + " != ?";
+        String[] selectionArgs = { String.valueOf(1) };
+
+        Cursor cursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
         cursor.moveToFirst();
 
         Card card;
@@ -104,6 +107,8 @@ public class DishesDataSource {
 
         cursor.close();
         db.close();
+
+        Log.d(TAG, "Database content: " + String.valueOf(getDishesCount()));
 
         return cardsList;
     }
@@ -125,6 +130,9 @@ public class DishesDataSource {
         String locationName = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_LOCATION_NAME));
         int distance = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_DISTANCE));
         int pricing = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_PRICING));
+
+        Log.d(TAG, "Card " + dish + " is consumed " + String.valueOf(cursor.getInt(
+                cursor.getColumnIndex(DishesContract.DishEntry.COLUMN_NAME_CONSUMED))));
 
         return new Card(dishId, location, image, dish, locationName, distance, pricing);
     }
@@ -164,6 +172,29 @@ public class DishesDataSource {
         db.close();
     }
 
+    public void setConsumed(String dishId) {
+        db = dbHelper.getReadableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_CONSUMED, true);
+
+        String selection = COLUMN_NAME_DISH_ID + " LIKE ?";
+        String[] selectionArgs = { String.valueOf(dishId) };
+
+        db.update(TABLE_NAME, values, selection, selectionArgs);
+
+        db.close();
+    }
+
+    public int getDishesCount() {
+        db = dbHelper.getReadableDatabase();
+        Cursor cursor =  db.query(TABLE_NAME, columns, null, null, null, null, null);
+        int count = cursor.getCount();
+        cursor.close();
+        db.close();
+        return count;
+    }
+
     private Drawable loadImage(String imageName) {
         // Get application context wrapper
         ContextWrapper contextWrapper = new ContextWrapper(context.getApplicationContext());
@@ -183,6 +214,8 @@ public class DishesDataSource {
 
         return image;
     }
+
+
 
 //    public List<Card> listDishes() {
 //        List<Card> cardMemoList = new ArrayList<>();

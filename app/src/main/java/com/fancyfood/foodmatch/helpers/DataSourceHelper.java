@@ -46,6 +46,11 @@ public class DataSourceHelper {
         dishesDataSource.truncate();
     }
 
+    public void consumeDish(Card card) {
+        String dishId = card.getDishId();
+        dishesDataSource.setConsumed(dishId);
+    }
+
     public ArrayList<Card> getCurrentCards(int limit) {
         return dishesDataSource.getAllDishes(limit);
     }

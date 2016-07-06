@@ -69,13 +69,13 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
     }
 
     public void appendCards(ArrayList<Card> cardsList) {
-        Log.d(TAG, "New cards: " + cardsList.toString());
         Collections.shuffle(cardsList);
-        if (cards.size() == 0)
-            cards.addAll(cardsList);
+        if (cards.size() < 1) cards.addAll(cardsList);
+        adapter.notifyDataSetChanged();
     }
 
-    public void refresh() {
+    public void resetCards() {
+        cards.clear();
         adapter.notifyDataSetChanged();
     }
 
@@ -86,6 +86,7 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
 
     @Override
     public void removeFirstObjectInAdapter() {
+        database.consumeDish(cards.get(0));
         cards.remove(0); // Remove first object in adapter
         adapter.notifyDataSetChanged();
     }

@@ -92,6 +92,10 @@ public class CoreActivity extends AppCompatActivity {
         return collapsingToolbar;
     }
 
+    public DrawerLayout getDrawerLayout() {
+        return drawerLayout;
+    }
+
     public NavigationView getNavigation() {
         return navigation;
     }

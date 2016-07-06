@@ -10,7 +10,7 @@ public final class Preferences {
     // Defaults
     public static final int DEFAULT_RADIUS = 5;
 
-    public static int getRadius(Context context) {// Restore preferences
+    public static int restoreRadius(Context context) {// Restore preferences
         SharedPreferences settings = context.getSharedPreferences(PREFERENCES, 0);
         return settings.getInt("radius", DEFAULT_RADIUS);
     }

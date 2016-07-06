@@ -6,7 +6,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -35,7 +34,6 @@ import com.fancyfood.foodmatch.preferences.Constants;
 import com.fancyfood.foodmatch.core.CoreActivity;
 import com.fancyfood.foodmatch.core.CoreApplication;
 import com.fancyfood.foodmatch.R;
-import com.fancyfood.foodmatch.adapters.CardAdapter;
 import com.fancyfood.foodmatch.fragments.RadiusDialogFragment;
 import com.fancyfood.foodmatch.fragments.RadiusDialogFragment.RadiusDialogListener;
 import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper;
@@ -76,6 +74,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     private boolean eatMode = false;
     private boolean switchTouched = false;
     private boolean collapsed = false;
+    private boolean isLocated = false;
 
     /* Activity Lifecycle */
 
@@ -88,23 +87,19 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         initializeUserActionListener();
 
         // Restore preferences
-        radius = Preferences.getRadius(this);
-
-        // Progress bar
-        progressBar = (ProgressBar) findViewById(R.id.progress_bar);
+        radius = Preferences.restoreRadius(this);
 
         // Get database helper
         database = new DataSourceHelper(this);
 
-        // Start location change listener
+        // Start on location change listener
         if (CoreApplication.getGoogleApiHelper() != null) {
             locationHelper = CoreApplication.getGoogleApiHelper();
             locationHelper.setOnLocationChangedListener(this);
         }
 
         // Initialize cards container
-        SwipeFlingAdapterView cardsContainer = (SwipeFlingAdapterView) findViewById(R.id.rating_cards);
-        swipeCards = new SwipeCards(this, cardsContainer);
+        swipeCards = new SwipeCards(this, (SwipeFlingAdapterView) findViewById(R.id.rating_cards));
         swipeCards.setOnFlingCallbackListener(this);
 
         // Set intent filter for receiving data
@@ -115,8 +110,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     protected void onStart() {
         super.onStart();
 
-        database.truncateDishes();
-
+        // Connect the location helper
         if (locationHelper != null && !locationHelper.isConnected()) {
             locationHelper.connect();
         }
@@ -126,10 +120,15 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     protected void onStop() {
         super.onStop();
 
+        // Empty dishes data base for next session
+        database.truncateDishes();
+
+        // Disconnect location helper
         if (locationHelper != null && locationHelper.isConnected()) {
             locationHelper.disconnect();
         }
 
+        // Store preferences if changed
         Preferences.storeRadius(this, radius);
     }
 
@@ -162,7 +161,6 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         cardsList.addAll(database.getCurrentCards(10));
         //Log.d(TAG, "Dish name: " + cardsList.get(0).getDish());
         swipeCards.appendCards(cardsList);
-        swipeCards.refresh();
 
         //Card card = dishesDataSource.getFirstData();
         //cards.add(card);
@@ -199,12 +197,14 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
     @Override
     public void onLocationChanged(Location location) {
-        if (currentLocation == null) {
-            currentLocation = location;
-            startDataService();
-        }
-
         currentLocation = location;
+
+        if (!isLocated) {
+            displayUI();
+            startDataService();
+            progressBar.setVisibility(View.INVISIBLE);
+            isLocated = true;
+        }
 
         Log.d(TAG, "Position: LAT " + Double.toString(location.getLatitude()) + "| LNG " + Double.toString(location.getLongitude()));
     }
@@ -237,6 +237,9 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     /* Helper methods */
 
     public void initializeUserActionListener() {
+        // Progress bar
+        progressBar = (ProgressBar) findViewById(R.id.progress_bar);
+
         // Set navigation
         getNavigation().setNavigationItemSelectedListener(new OnNavigationItemSelectedListener() {
             @Override
@@ -333,8 +336,9 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
                     collapsed = true;
 
-                    displayUI();
-                    progressBar.setVisibility(View.INVISIBLE);
+                    if (isLocated) {
+                        swipeCards.display();
+                    }
                 }
 
                 // Fade out intro content
@@ -403,6 +407,13 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     @Override
     public void onDialogPositiveClick(RadiusDialogFragment dialog) {
         radius = dialog.getRadius();
+        getDrawerLayout().closeDrawers();
+
+        if (isLocated) {
+            swipeCards.resetCards();
+            database.truncateDishes();
+            startDataService();
+        }
     }
 
 }

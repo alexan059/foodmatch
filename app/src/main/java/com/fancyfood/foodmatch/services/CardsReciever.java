@@ -28,7 +28,6 @@ public class CardsReciever extends BroadcastReceiver {
 
         switch (status) {
             case Constants.DATA_RECEIVED:
-                Toast.makeText(context, "Ergebnisse erhalten", Toast.LENGTH_SHORT).show();
                 listener.onDataReceive();
                 break;
             case Constants.DATA_PARSE_ERROR:
