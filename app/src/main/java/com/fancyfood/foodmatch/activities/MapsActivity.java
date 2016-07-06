@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
 import com.akexorcist.googledirection.DirectionCallback;
@@ -183,6 +184,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             for (PolylineOptions polylineOption : polylineOptionList) {                             //draw route with polylines
                 mMap.addPolyline(polylineOption);
+            }
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) { //Add Current location Button
+                mMap.setMyLocationEnabled(true);
+
             }
         } else if(status.equals(RequestResult.NOT_FOUND)) {
             Toast.makeText(getApplicationContext(), "no route found ", Toast.LENGTH_SHORT).show();
