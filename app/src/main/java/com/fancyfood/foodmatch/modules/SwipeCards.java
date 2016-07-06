@@ -71,12 +71,17 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
     public void appendCards(ArrayList<Card> cardsList) {
         Collections.shuffle(cardsList);
         if (cards.size() < 1) cards.addAll(cardsList);
+        refresh();
+    }
+
+    public void refresh() {
         adapter.notifyDataSetChanged();
+        container.requestLayout();
     }
 
     public void resetCards() {
         cards.clear();
-        adapter.notifyDataSetChanged();
+        refresh();
     }
 
     @Override

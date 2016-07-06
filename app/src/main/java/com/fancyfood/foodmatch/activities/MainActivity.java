@@ -74,7 +74,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     // Flags
     private boolean eatMode = false;
     private boolean switchTouched = false;
-    private boolean collapsed = false;
+    private boolean isStarted = false;
+    private boolean isCollapsed = false;
     private boolean isLocated = false;
 
     /* Activity Lifecycle */
@@ -145,6 +146,13 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         LocalBroadcastManager.getInstance(this).registerReceiver(tokenReceiver, tokenFilter);
     }
 
+    private void firstStart() {
+        if (!isStarted) {
+            startDataService();
+            isStarted = true;
+        }
+    }
+
     private void startDataService() {
         // "restaurants/55.56/57.6/2000" -> resource/lat/lng/radius
         // http://api.collective-art.de/restaurants/13.5264438/52.4569312/2000?pretty&token=n5DUfSC72hPABeEhu89Ex63soJ2oJCQfTxlim8MC6oHVLlrutMa3xDjDursL
@@ -166,6 +174,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         cardsList.addAll(database.getCurrentCards(10));
         //Log.d(TAG, "Dish name: " + cardsList.get(0).getDish());
         swipeCards.appendCards(cardsList);
+        swipeCards.refresh();
 
         //Card card = dishesDataSource.getFirstData();
         //cards.add(card);
@@ -206,7 +215,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
         if (!isLocated) {
             displayUI();
-            startDataService();
+            if (isCollapsed) firstStart();
             progressBar.setVisibility(View.INVISIBLE);
             isLocated = true;
         }
@@ -339,10 +348,11 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                     appBarLayout.requestLayout();
                     appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
 
-                    collapsed = true;
+                    isCollapsed = true;
 
                     if (isLocated) {
                         swipeCards.display();
+                        firstStart();
                     }
                 }
 
@@ -394,7 +404,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
         if (v.getId() == R.id.switch_compat) {
             switchTouched = true;
-            if (!collapsed) collapseToolbar();
+            if (!isCollapsed) collapseToolbar();
         } else {
             int action = MotionEventCompat.getActionMasked(event);
 
