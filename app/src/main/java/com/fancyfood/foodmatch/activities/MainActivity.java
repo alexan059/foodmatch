@@ -52,7 +52,8 @@ import static android.view.View.OnClickListener;
 import static android.view.View.OnTouchListener;
 
 public class MainActivity extends CoreActivity implements OnClickListener, OnTouchListener,
-        OnLocationChangedListener, RadiusDialogListener, CardsReciever.OnDataReceiveListener, SwipeCards.OnFlingCallbackListener {
+        OnLocationChangedListener, RadiusDialogListener, CardsReciever.OnDataReceiveListener,
+        SwipeCards.OnFlingCallbackListener {
 
     // Debug Tag
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -114,6 +115,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     protected void onStart() {
         super.onStart();
 
+        database.truncateDishes();
+
         if (locationHelper != null && !locationHelper.isConnected()) {
             locationHelper.connect();
         }
@@ -141,25 +144,34 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     private void startDataService() {
         // "restaurants/55.56/57.6/2000" -> resource/lat/lng/radius
         // http://api.collective-art.de/restaurants/13.5264438/52.4569312/2000?pretty&token=n5DUfSC72hPABeEhu89Ex63soJ2oJCQfTxlim8MC6oHVLlrutMa3xDjDursL
-        String lat = "13.5264438"; //Double.toString(currentLocation.getLatitude());
-        String lng = "52.4569312"; //Double.toString(currentLocation.getLongitude());
-        String rad = "2000"; //Integer.toString(radius) + "00";
+        String lat = Double.toString(currentLocation.getLatitude());
+        String lng = Double.toString(currentLocation.getLongitude());
+        String rad = Integer.toString(radius) + "00";
 
-        String uri = "restaurants/" + lat + "/" + lng + "/" + rad;
+        String uri = "restaurants/" + lng + "/" + lat + "/" + rad;
 
         Intent intent = new Intent(this, CardsPullService.class);
         intent.setData(Uri.parse(uri));
+
         startService(intent);
     }
 
     @Override
     public void onDataReceive() {
         ArrayList<Card> cardsList = new ArrayList<>();
-        cardsList.add(database.getCard());
+        cardsList.addAll(database.getCurrentCards(10));
+        //Log.d(TAG, "Dish name: " + cardsList.get(0).getDish());
         swipeCards.appendCards(cardsList);
+        swipeCards.refresh();
+
         //Card card = dishesDataSource.getFirstData();
         //cards.add(card);
         //cardAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void requestCards() {
+        startDataService();
     }
 
     /* Google Api Helper and Location Listener */
@@ -177,6 +189,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
             // Put coordinates as extra data for MapsActivity
             i.putExtra("Lat", lat);
             i.putExtra("Lng", lng);
+
+            Log.d(TAG, "Starting Maps with LAT: " + Double.toString(lat) + ", LNG: " + Double.toString(lng));
 
             // Start MapsActivity
             startActivity(i);
@@ -236,11 +250,6 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     }
 
     /* Helper methods */
-
-    private void initTasks() {
-        WaitForLoactionTask task = new WaitForLoactionTask();
-        task.execute();
-    }
 
     public void initializeUserActionListener() {
         // Set navigation
@@ -338,7 +347,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                     appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
 
                     collapsed = true;
-                    initTasks();
+                    WaitForLoactionTask task = new WaitForLoactionTask();
+                    task.execute();
                 }
 
                 // Fade out intro content

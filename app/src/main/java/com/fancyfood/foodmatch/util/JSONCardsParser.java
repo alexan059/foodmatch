@@ -1,7 +1,9 @@
 package com.fancyfood.foodmatch.util;
 
 import android.location.Location;
+import android.util.Log;
 
+import com.fancyfood.foodmatch.helpers.HttpConnectionHelper;
 import com.fancyfood.foodmatch.models.Card;
 
 import org.json.JSONArray;
@@ -13,6 +15,8 @@ import java.net.URL;
 import java.util.ArrayList;
 
 public final class JSONCardsParser {
+
+    private static final String TAG = JSONCardsParser.class.getSimpleName();
 
     public static ArrayList<Card> parse(JSONArray array) {
         try {
@@ -35,6 +39,8 @@ public final class JSONCardsParser {
         JSONArray dishes = restaurant.getJSONArray("dishes");
 
         ArrayList<Card> cardsList = new ArrayList<>();
+
+        Log.d(TAG, restaurant.getString("name") + " has " + Integer.toString(dishes.length()) + " dishes.");
 
         // Loop through all elements
         for (int i = 0; i < dishes.length(); i++) {

@@ -35,15 +35,19 @@ public class DataSourceHelper {
 
     public void addCardsBatch(ArrayList<Card> cardsList) {
         // Loop through all cards
-        for (Card aCardsList : cardsList) addCard(aCardsList);
+        for (Card card : cardsList) addCard(card);
     }
 
     public void addCard(Card card) {
         dishesDataSource.insertDish(card);
     }
 
-    public void getCurrentCards(int limit) {
+    public void truncateDishes() {
+        dishesDataSource.truncate();
+    }
 
+    public ArrayList<Card> getCurrentCards(int limit) {
+        return dishesDataSource.getAllDishes(limit);
     }
 
     public Card getCard() {

@@ -49,6 +49,10 @@ public class CardsPullService extends IntentService {
         if (results != null && results.length() > 0) {
             ArrayList<Card> cardsList = JSONCardsParser.parse(results);
 
+            HttpConnectionHelper.downloadImages(this, cardsList);
+
+            Log.d(TAG, Integer.toString(results.length()) + " results.");
+
             // Parse success
             if (cardsList != null) {
                 // Add cards to database
@@ -70,21 +74,6 @@ public class CardsPullService extends IntentService {
                 .putExtra(Constants.EXTENDED_DATA_STATUS, status);
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-    }
-
-    private Drawable loadImage(String directory, String imageName) {
-        Drawable image = null;
-
-        try {
-            File imageFile = new File(directory, imageName);
-            Bitmap bitmap = BitmapFactory.decodeStream(new FileInputStream(imageFile));
-
-            image = new BitmapDrawable(getResources(), bitmap);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return image;
     }
 
     private URL getFullUrl(String uri) {

@@ -1,12 +1,10 @@
 package com.fancyfood.foodmatch.modules;
 
 import android.content.Context;
-import android.content.Intent;
+import android.util.Log;
 import android.view.View;
 
 import com.fancyfood.foodmatch.R;
-import com.fancyfood.foodmatch.activities.MainActivity;
-import com.fancyfood.foodmatch.activities.MapsActivity;
 import com.fancyfood.foodmatch.adapters.CardAdapter;
 import com.fancyfood.foodmatch.helpers.DataSourceHelper;
 import com.fancyfood.foodmatch.models.Card;
@@ -14,8 +12,13 @@ import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeFlingAdapterView.OnItemClickListener{
+
+    private static final String TAG = SwipeCards.class.getSimpleName();
 
     private Context context;
     private DataSourceHelper database;
@@ -28,6 +31,7 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
 
     public interface OnFlingCallbackListener {
         void startMapsActivity(Card card);
+        void requestCards();
     }
 
     public SwipeCards(Context context, SwipeFlingAdapterView container) {
@@ -65,8 +69,14 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
     }
 
     public void appendCards(ArrayList<Card> cardsList) {
+        Log.d(TAG, "New cards: " + cardsList.toString());
         Collections.shuffle(cardsList);
-        cards.addAll(cardsList);
+        if (cards.size() == 0)
+            cards.addAll(cardsList);
+    }
+
+    public void refresh() {
+        adapter.notifyDataSetChanged();
     }
 
     @Override
@@ -93,8 +103,8 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
 
     @Override
     public void onAdapterAboutToEmpty(int items) {
-        //if (itemsInAdapter < 1)
-        //    startDataService();
+        if (items == 1)
+            listener.requestCards();
     }
 
     @Override

@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import com.fancyfood.foodmatch.models.Card;
@@ -17,6 +18,8 @@ import com.fancyfood.foodmatch.models.Card;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.net.URL;
+import java.util.ArrayList;
 
 import static com.fancyfood.foodmatch.data.DishesContract.DishEntry.COLUMN_NAME_CREATED_AT;
 import static com.fancyfood.foodmatch.data.DishesContract.DishEntry._ID;
@@ -84,23 +87,46 @@ public class DishesDataSource {
         db.close();
     }
 
-    public void getAllDishes() {
+    public ArrayList<Card> getAllDishes(int limit) {
         db = dbHelper.getReadableDatabase();
 
         Cursor cursor = db.query(TABLE_NAME, columns, null, null, null, null, null);
         cursor.moveToFirst();
 
-        //long itemId = cursor.getLong(cursor.getColumnIndexOrThrow(_ID));
+        Card card;
+        ArrayList<Card> cardsList = new ArrayList<>();
 
-        String dishId = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DISH_ID));
-        String dish = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DISH));
-        double lat = cursor.getDouble(cursor.getColumnIndex(COLUMN_NAME_LAT));
-        double lng = cursor.getDouble(cursor.getColumnIndex(COLUMN_NAME_LNG));
-
-        Log.d(TAG, dishId + " " + dish + " " + Double.toString(lat) + " " + Double.toString(lng));
+        while(!cursor.isAfterLast()) {
+            card = getCard(cursor);
+            cardsList.add(card);
+            cursor.moveToNext();
+        }
 
         cursor.close();
         db.close();
+
+        return cardsList;
+    }
+
+    public Card getCard(Cursor cursor) {
+        String dishId = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DISH_ID));
+        String dish = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_DISH));
+        String imageName = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_IMAGE_NAME));
+
+        Drawable image = loadImage(imageName);
+
+        double lat = cursor.getDouble(cursor.getColumnIndex(COLUMN_NAME_LAT));
+        double lng = cursor.getDouble(cursor.getColumnIndex(COLUMN_NAME_LNG));
+
+        Location location = new Location("");
+        location.setLatitude(lat);
+        location.setLongitude(lng);
+
+        String locationName = cursor.getString(cursor.getColumnIndex(COLUMN_NAME_LOCATION_NAME));
+        int distance = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_DISTANCE));
+        int pricing = cursor.getInt(cursor.getColumnIndex(COLUMN_NAME_PRICING));
+
+        return new Card(dishId, location, image, dish, locationName, distance, pricing);
     }
 
     public Card getFirstData() {
@@ -130,6 +156,12 @@ public class DishesDataSource {
         db.close();
 
         return new Card(dishId, location, image, dish, locationName, distance, pricing);
+    }
+
+    public void truncate() {
+        db = dbHelper.getWritableDatabase();
+        db.execSQL("DELETE FROM " + TABLE_NAME);
+        db.close();
     }
 
     private Drawable loadImage(String imageName) {

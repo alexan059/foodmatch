@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import com.fancyfood.foodmatch.models.Card;
+import com.fancyfood.foodmatch.preferences.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -19,7 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 public final class HttpConnectionHelper {
 
@@ -60,6 +63,16 @@ public final class HttpConnectionHelper {
         return null;
     }
 
+    public static void downloadImages(Context context, ArrayList<Card> cardsList) {
+        for (Card card : cardsList) {
+            String fileName = card.getImageName();
+            String uri = "restaurants/media/";
+            URL url = getFullURL(uri + fileName);
+            downloadImage(context, url, fileName);
+        }
+
+    }
+
     public static String downloadImage(Context context, URL location, String imageName) {
         // Get application context wrapper
         ContextWrapper contextWrapper = new ContextWrapper(context.getApplicationContext());
@@ -96,7 +109,7 @@ public final class HttpConnectionHelper {
         return directory.getAbsolutePath();
     }
 
-    static JSONArray parseJSONArray(InputStream stream) throws IOException, JSONException {
+    public static JSONArray parseJSONArray(InputStream stream) throws IOException, JSONException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
         StringBuilder builder = new StringBuilder();
         String line;
@@ -108,4 +121,18 @@ public final class HttpConnectionHelper {
         return new JSONArray(builder.toString());
     }
 
+    public static URL getFullURL(String uri) {
+        try {
+            String url = Constants.API_ENTRY_POINT + uri + "?token=n5DUfSC72hPABeEhu89Ex63soJ2oJCQfTxlim8MC6oHVLlrutMa3xDjDursL";
+
+            Log.d(TAG, url);
+
+            return new URL(url);
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }
