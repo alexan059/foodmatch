@@ -66,11 +66,14 @@ public final class JSONCardsParser {
 
         // Prepare location
         Location location = new Location("");
-        location.setLatitude(coordinates.getDouble(0));
-        location.setLongitude(coordinates.getDouble(1));
+        location.setLatitude(coordinates.getDouble(1));
+        location.setLongitude(coordinates.getDouble(0));
 
         // Set location
         card.setLocation(location);
+
+        // Set distance
+        card.setDistance(restaurant.getDouble("distance"));
 
         // Set image name
         card.setImageName(dish.getJSONObject("media").getString("file"));

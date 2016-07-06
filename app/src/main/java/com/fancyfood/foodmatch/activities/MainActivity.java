@@ -199,7 +199,13 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
     @Override
     public void onLocationChanged(Location location) {
+        if (currentLocation == null) {
+            currentLocation = location;
+            startDataService();
+        }
+
         currentLocation = location;
+
         Log.d(TAG, "Position: LAT " + Double.toString(location.getLatitude()) + "| LNG " + Double.toString(location.getLongitude()));
     }
 
@@ -226,27 +232,6 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         }
 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    /* Async Task */
-
-    public class WaitForLoactionTask extends AsyncTask<String, String, String> {
-        @Override
-        protected String doInBackground(String... params) {
-            while (currentLocation == null) {
-                // Nop
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            //initFling();
-            startDataService();
-            displayUI();
-            progressBar.setVisibility(View.INVISIBLE);
-        }
     }
 
     /* Helper methods */
@@ -347,8 +332,9 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                     appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
 
                     collapsed = true;
-                    WaitForLoactionTask task = new WaitForLoactionTask();
-                    task.execute();
+
+                    displayUI();
+                    progressBar.setVisibility(View.INVISIBLE);
                 }
 
                 // Fade out intro content

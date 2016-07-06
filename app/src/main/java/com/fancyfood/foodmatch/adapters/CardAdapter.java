@@ -35,6 +35,7 @@ public class CardAdapter extends ArrayAdapter<Card> {
         ImageView image;
         TextView dish;
         TextView location;
+        TextView distance;
     }
 
     @Override
@@ -58,6 +59,7 @@ public class CardAdapter extends ArrayAdapter<Card> {
             viewHolder.image = (ImageView) convertView.findViewById(R.id.ivDish);
             viewHolder.dish = (TextView) convertView.findViewById(R.id.tvDish);
             viewHolder.location = (TextView) convertView.findViewById(R.id.tvLocation);
+            viewHolder.distance = (TextView) convertView.findViewById(R.id.tvDistance);
 
             // Store view
             convertView.setTag(viewHolder);
@@ -66,10 +68,14 @@ public class CardAdapter extends ArrayAdapter<Card> {
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
+        // Values
+        String distance = Double.toString(getItem(position).getDistance()) + "m";
+
         // Assign new data to view holder
         viewHolder.image.setImageDrawable(getItem(position).getImage());
         viewHolder.dish.setText(getItem(position).getDish());
         viewHolder.location.setText(getItem(position).getLocationName());
+        viewHolder.distance.setText(distance);
 
 
         // Return manipulated view
