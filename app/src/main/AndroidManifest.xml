@@ -48,6 +48,9 @@
         <service
             android:name=".services.CardsPullService"
             android:exported="false"/>
+        <service
+            android:name=".services.AuthenticationService"
+            android:exported="false"/>
 
     </application>
 

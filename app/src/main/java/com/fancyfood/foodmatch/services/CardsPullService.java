@@ -2,10 +2,6 @@ package com.fancyfood.foodmatch.services;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -17,11 +13,6 @@ import com.fancyfood.foodmatch.models.Card;
 
 import org.json.JSONArray;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 
 public class CardsPullService extends IntentService {
@@ -42,8 +33,8 @@ public class CardsPullService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "Intent service started.");
 
-        URL location = getFullUrl(intent.getDataString());
-        JSONArray results = HttpConnectionHelper.getJSONDataArray(location);
+        String uri = intent.getDataString();
+        JSONArray results = HttpConnectionHelper.requestDishes(this, uri);
 
         // Has results
         if (results != null && results.length() > 0) {
@@ -74,20 +65,5 @@ public class CardsPullService extends IntentService {
                 .putExtra(Constants.EXTENDED_DATA_STATUS, status);
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-    }
-
-    private URL getFullUrl(String uri) {
-        try {
-            String url = Constants.API_ENTRY_POINT + uri + "?token=n5DUfSC72hPABeEhu89Ex63soJ2oJCQfTxlim8MC6oHVLlrutMa3xDjDursL";
-
-            Log.d(TAG, url);
-
-            return new URL(url);
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
 }

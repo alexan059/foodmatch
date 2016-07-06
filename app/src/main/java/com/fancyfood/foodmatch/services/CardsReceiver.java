@@ -8,9 +8,9 @@ import android.widget.Toast;
 
 import com.fancyfood.foodmatch.preferences.Constants;
 
-public class CardsReciever extends BroadcastReceiver {
+public class CardsReceiver extends BroadcastReceiver {
 
-    private static final String TAG = CardsReciever.class.getSimpleName();
+    private static final String TAG = CardsReceiver.class.getSimpleName();
 
     public interface OnDataReceiveListener {
         void onDataReceive();
@@ -18,7 +18,7 @@ public class CardsReciever extends BroadcastReceiver {
 
     private OnDataReceiveListener listener;
 
-    public CardsReciever(OnDataReceiveListener listener) {
+    public CardsReceiver(OnDataReceiveListener listener) {
         this.listener = listener;
     }
 

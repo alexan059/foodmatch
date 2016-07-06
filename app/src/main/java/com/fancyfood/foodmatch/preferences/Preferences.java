@@ -9,6 +9,7 @@ public final class Preferences {
 
     // Defaults
     public static final int DEFAULT_RADIUS = 5;
+    public static final String DEFAULT_TOKEN = null;
 
     public static int restoreRadius(Context context) {// Restore preferences
         SharedPreferences settings = context.getSharedPreferences(PREFERENCES, 0);
@@ -19,6 +20,18 @@ public final class Preferences {
         SharedPreferences settings = context.getSharedPreferences(PREFERENCES, 0);
         SharedPreferences.Editor editor = settings.edit();
         editor.putInt("radius", radius);
+        editor.apply();
+    }
+
+    public static String restoreToken(Context context) {
+        SharedPreferences settings = context.getSharedPreferences(PREFERENCES, 0);
+        return settings.getString("token", DEFAULT_TOKEN);
+    }
+
+    public static void storeToken(Context context, String token) {
+        SharedPreferences settings = context.getSharedPreferences(PREFERENCES, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("token", token);
         editor.apply();
     }
 

@@ -40,8 +40,9 @@ import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper;
 import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper.OnLocationChangedListener;
 import com.fancyfood.foodmatch.models.Card;
 import com.fancyfood.foodmatch.preferences.Preferences;
-import com.fancyfood.foodmatch.services.CardsReciever;
+import com.fancyfood.foodmatch.services.CardsReceiver;
 import com.fancyfood.foodmatch.services.CardsPullService;
+import com.fancyfood.foodmatch.services.TokenReceiver;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ import static android.view.View.OnClickListener;
 import static android.view.View.OnTouchListener;
 
 public class MainActivity extends CoreActivity implements OnClickListener, OnTouchListener,
-        OnLocationChangedListener, RadiusDialogListener, CardsReciever.OnDataReceiveListener,
+        OnLocationChangedListener, RadiusDialogListener, CardsReceiver.OnDataReceiveListener,
         SwipeCards.OnFlingCallbackListener {
 
     // Debug Tag
@@ -135,9 +136,13 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     /* IntentService for receiving data */
 
     private void setIntentFilter() {
-        IntentFilter filter = new IntentFilter(Constants.BROADCAST_ACTION);
-        CardsReciever reciever = new CardsReciever(this);
-        LocalBroadcastManager.getInstance(this).registerReceiver(reciever, filter);
+        IntentFilter dataFilter = new IntentFilter(Constants.BROADCAST_ACTION);
+        CardsReceiver dataReceiver = new CardsReceiver(this);
+        LocalBroadcastManager.getInstance(this).registerReceiver(dataReceiver, dataFilter);
+
+        IntentFilter tokenFilter = new IntentFilter(Constants.BROADCAST_TOKEN);
+        TokenReceiver tokenReceiver = new TokenReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(tokenReceiver, tokenFilter);
     }
 
     private void startDataService() {
