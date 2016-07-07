@@ -39,17 +39,31 @@
         android:layout_marginRight="50dp"
         android:layout_marginBottom="30dp"/>
 
-    <com.lorentzos.flingswipe.SwipeFlingAdapterView
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/rating_cards"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:alpha="0"
 
-        app:rotation_degrees="8"
-        app:max_visible="2"
-        app:min_adapter_stack="6" />
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ProgressBar
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:id="@+id/cards_progress_bar"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="150dp" />
+
+        <com.lorentzos.flingswipe.SwipeFlingAdapterView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/rating_cards"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            app:rotation_degrees="8"
+            app:max_visible="2"
+            app:min_adapter_stack="6" />
+
+    </RelativeLayout>
+
 
     <ProgressBar
         android:layout_width="wrap_content"

@@ -64,8 +64,8 @@
                         android:layout_height="wrap_content"
                         android:text="Ich bin hungrig"
                         android:id="@+id/btHungry"
-                        android:layout_gravity="center"
                         style="@style/button"
+                        android:layout_gravity="center"
                         android:layout_marginBottom="20dp" />
 
                     <Button
@@ -73,8 +73,8 @@
                         android:layout_height="wrap_content"
                         android:text="Entdecken"
                         android:id="@+id/btDiscover"
-                        android:layout_gravity="center"
-                        style="@style/button"/>
+                        style="@style/button"
+                        android:layout_gravity="center"/>
                 </LinearLayout>
 
                 <!-- Toolbar (Menu and Title) -->

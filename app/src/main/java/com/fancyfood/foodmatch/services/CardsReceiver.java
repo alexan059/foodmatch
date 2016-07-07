@@ -14,6 +14,7 @@ public class CardsReceiver extends BroadcastReceiver {
 
     public interface OnDataReceiveListener {
         void onDataReceive();
+        void onNoResult();
     }
 
     private OnDataReceiveListener listener;
@@ -30,11 +31,12 @@ public class CardsReceiver extends BroadcastReceiver {
             case Constants.DATA_RECEIVED:
                 listener.onDataReceive();
                 break;
-            case Constants.DATA_PARSE_ERROR:
-                Log.d(TAG, "Parse Error - JSON Data Format not valid.");
             case Constants.DATA_NO_RESULTS:
-                Toast.makeText(context, "Keine Ergebnisse", Toast.LENGTH_SHORT).show();
+                listener.onNoResult();
                 break;
+            case Constants.DATA_PARSE_ERROR:
+                Toast.makeText(context, "Es ist ein Fehler aufgetreten", Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Parse Error - JSON Data Format not valid.");
         }
     }
 }

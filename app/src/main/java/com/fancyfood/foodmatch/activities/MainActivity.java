@@ -28,8 +28,11 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.fancyfood.foodmatch.fragments.NoResultDialogFragment;
+import com.fancyfood.foodmatch.fragments.NoResultDialogFragment.NoResultDialogListener;
 import com.fancyfood.foodmatch.helpers.DataSourceHelper;
 import com.fancyfood.foodmatch.modules.SwipeCards;
+import com.fancyfood.foodmatch.modules.SwipeCards.OnFlingCallbackListener;
 import com.fancyfood.foodmatch.preferences.Constants;
 import com.fancyfood.foodmatch.core.CoreActivity;
 import com.fancyfood.foodmatch.core.CoreApplication;
@@ -42,6 +45,7 @@ import com.fancyfood.foodmatch.models.Card;
 import com.fancyfood.foodmatch.preferences.Preferences;
 import com.fancyfood.foodmatch.services.CardsReceiver;
 import com.fancyfood.foodmatch.services.CardsPullService;
+import com.fancyfood.foodmatch.services.CardsReceiver.OnDataReceiveListener;
 import com.fancyfood.foodmatch.services.TokenReceiver;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
@@ -51,8 +55,8 @@ import static android.view.View.OnClickListener;
 import static android.view.View.OnTouchListener;
 
 public class MainActivity extends CoreActivity implements OnClickListener, OnTouchListener,
-        OnLocationChangedListener, RadiusDialogListener, CardsReceiver.OnDataReceiveListener,
-        SwipeCards.OnFlingCallbackListener {
+        OnLocationChangedListener, RadiusDialogListener, OnDataReceiveListener,
+        OnFlingCallbackListener, NoResultDialogListener {
 
     // Debug Tag
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -63,8 +67,9 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     // Views
     private SwitchCompat modeSwitch;
     private ProgressBar progressBar;
-
     private SwipeCards swipeCards;
+    private Button btPositive;
+    private Button btNegative;
 
     // Location and radius settings
     private GoogleApiLocationHelper locationHelper;
@@ -170,20 +175,33 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
     @Override
     public void onDataReceive() {
-        ArrayList<Card> cardsList = new ArrayList<>();
-        cardsList.addAll(database.getCurrentCards(10));
-        //Log.d(TAG, "Dish name: " + cardsList.get(0).getDish());
-        swipeCards.appendCards(cardsList);
-        swipeCards.refresh();
+        ArrayList<Card> cards = database.getCurrentCards(10);
 
-        //Card card = dishesDataSource.getFirstData();
-        //cards.add(card);
-        //cardAdapter.notifyDataSetChanged();
+        if (cards.size() > 0) {
+            swipeCards.appendCards(cards);
+            btNegative.setEnabled(true);
+            btPositive.setEnabled(true);
+        } else {
+            onNoResult();
+        }
+
+    }
+
+    @Override
+    public void onNoResult() {
+        NoResultDialogFragment dialog = new NoResultDialogFragment();
+        dialog.show(getFragmentManager(), NoResultDialogFragment.class.getSimpleName());
     }
 
     @Override
     public void requestCards() {
         startDataService();
+    }
+
+    @Override
+    public void disableButtons() {
+        btNegative.setEnabled(false);
+        btPositive.setEnabled(false);
     }
 
     /* Google Api Helper and Location Listener */
@@ -264,8 +282,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                         dialog.setRadius(radius);
                         dialog.show(getFragmentManager(), RadiusDialogFragment.class.getSimpleName());
                         break;
-                    case R.id.nav_settings:
-                        break;
+                    //case R.id.nav_settings:
+                    //    break;
                 }
 
                 return false;
@@ -291,24 +309,24 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         // Set buttons
         final Button btHungry = (Button) findViewById(R.id.btHungry);
         final Button btDiscover = (Button) findViewById(R.id.btDiscover);
-        final Button btLike = (Button) findViewById(R.id.btLike);
-        final Button btDislike = (Button) findViewById(R.id.btDislike);
+        btPositive = (Button) findViewById(R.id.btLike);
+        btNegative = (Button) findViewById(R.id.btDislike);
 
-        if (btHungry != null && btDiscover != null && btLike != null && btDislike != null) {
+        if (btHungry != null && btDiscover != null && btPositive != null && btNegative != null) {
             btHungry.setOnTouchListener(this);
             btHungry.setOnClickListener(this);
             btDiscover.setOnTouchListener(this);
             btDiscover.setOnClickListener(this);
-            btLike.setOnClickListener(this);
-            btLike.setOnTouchListener(this);
-            btDislike.setOnClickListener(this);
-            btDislike.setOnTouchListener(this);
+            btPositive.setOnClickListener(this);
+            btPositive.setOnTouchListener(this);
+            btNegative.setOnClickListener(this);
+            btNegative.setOnTouchListener(this);
 
             // Note: Since Lollipop buttons always appear in front because of a StateListAnimator.
             // To resolve this we check version Lollipop and above to deactivate this StateListAnimator.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                btLike.setStateListAnimator(null);
-                btDislike.setStateListAnimator(null);
+                btPositive.setStateListAnimator(null);
+                btNegative.setStateListAnimator(null);
             }
         }
     }
@@ -351,7 +369,6 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                     isCollapsed = true;
 
                     if (isLocated) {
-                        swipeCards.display();
                         firstStart();
                     }
                 }
@@ -366,15 +383,12 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     }
 
     private void displayUI() {
-        swipeCards.display();
-
         Button btLike = (Button) findViewById(R.id.btLike);
         Button btDislike = (Button) findViewById(R.id.btDislike);
         btLike.setVisibility(View.VISIBLE);
         btLike.animate().alpha(1).setDuration(200);
         btDislike.setVisibility(View.VISIBLE);
         btDislike.animate().alpha(1).setDuration(200);
-
     }
 
     /* On touch and on click listener */
@@ -420,7 +434,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     /* Radius Dialog Listener */
 
     @Override
-    public void onDialogPositiveClick(RadiusDialogFragment dialog) {
+    public void onRadiusDialogPositiveClick(RadiusDialogFragment dialog) {
         radius = dialog.getRadius();
         getDrawerLayout().closeDrawers();
 
@@ -431,4 +445,10 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         }
     }
 
+    @Override
+    public void onNoResultDialogPositiveClick(NoResultDialogFragment dialog) {
+        RadiusDialogFragment radiusDialog = new RadiusDialogFragment();
+        radiusDialog.setRadius(radius);
+        radiusDialog.show(getFragmentManager(), RadiusDialogFragment.class.getSimpleName());
+    }
 }

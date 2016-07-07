@@ -1,6 +1,8 @@
 package com.fancyfood.foodmatch.core;
 
 import android.app.Application;
+import android.content.Context;
+import android.support.multidex.MultiDex;
 
 import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper;
 
@@ -20,6 +22,17 @@ public class CoreApplication extends Application {
         // Reference this instance to shared attribute
         instance = this;
         googleApiHelper = new GoogleApiLocationHelper(this);
+    }
+
+    /**
+     * Handle firebase error on HTC One Mini (API 19)
+     *
+     * @param context
+     */
+    @Override
+    protected void attachBaseContext(Context context) {
+        super.attachBaseContext(context);
+        MultiDex.install(this);
     }
 
     /**

@@ -32,6 +32,7 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
     public interface OnFlingCallbackListener {
         void startMapsActivity(Card card);
         void requestCards();
+        void disableButtons();
     }
 
     public SwipeCards(Context context, SwipeFlingAdapterView container) {
@@ -48,16 +49,12 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
         container.setAdapter(adapter);
         container.setOnItemClickListener(this);
         container.setFlingListener(this);
+        hide();
+        refresh();
     }
 
     public void setOnFlingCallbackListener(OnFlingCallbackListener listener) {
         this.listener = listener;
-    }
-
-    public void display() {
-        container.setVisibility(View.VISIBLE);
-        container.animate().alpha(1).setDuration(200);
-        container.requestLayout();
     }
 
     public void selectRight() {
@@ -70,7 +67,10 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
 
     public void appendCards(ArrayList<Card> cardsList) {
         Collections.shuffle(cardsList);
-        if (cards.size() < 1) cards.addAll(cardsList);
+        if (cards.size() < 1) {
+            cards.addAll(cardsList);
+            fadeIn();
+        }
         refresh();
     }
 
@@ -84,6 +84,16 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
         refresh();
     }
 
+    public void fadeIn() {
+        container.animate().alpha(1).setDuration(400);
+        refresh();
+    }
+
+    public void hide() {
+        container.setAlpha(0);
+        refresh();
+    }
+
     @Override
     public void onItemClicked(int index, Object object) {
 
@@ -94,6 +104,11 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
         database.consumeDish(cards.get(0));
         cards.remove(0); // Remove first object in adapter
         adapter.notifyDataSetChanged();
+
+        if (cards.size() == 0) {
+            listener.disableButtons();
+            hide();
+        }
     }
 
     @Override
@@ -109,8 +124,7 @@ public class SwipeCards implements SwipeFlingAdapterView.onFlingListener, SwipeF
 
     @Override
     public void onAdapterAboutToEmpty(int items) {
-        if (items == 1)
-            listener.requestCards();
+        if (items == 1) listener.requestCards();
     }
 
     @Override

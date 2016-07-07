@@ -11,6 +11,7 @@ import android.widget.TextView;
 import com.fancyfood.foodmatch.R;
 import com.fancyfood.foodmatch.models.Card;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 /**
@@ -69,7 +70,7 @@ public class CardAdapter extends ArrayAdapter<Card> {
         }
 
         // Values
-        String distance = Double.toString(getItem(position).getDistance()) + "m";
+        String distance = parseDistance(getItem(position).getDistance());
 
         // Assign new data to view holder
         viewHolder.image.setImageDrawable(getItem(position).getImage());
@@ -80,5 +81,15 @@ public class CardAdapter extends ArrayAdapter<Card> {
 
         // Return manipulated view
         return convertView;
+    }
+
+    private String parseDistance(double distance) {
+        if (distance > 999) {
+            distance = distance / 1000;
+            DecimalFormat format = new DecimalFormat("#.0");
+            return format.format(distance) + " km";
+        } else {
+            return String.valueOf(Math.round(distance)) + " m";
+        }
     }
 }
