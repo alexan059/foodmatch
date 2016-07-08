@@ -116,8 +116,6 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
         // Set intent filter for receiving data
         setIntentFilter();
-
-
     }
 
     @Override
@@ -385,8 +383,9 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         appBar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+
                 // Disable collapsing toolbar
-                if (verticalOffset == -(finalHeight)) {
+                if (Math.abs(verticalOffset) == Math.abs(finalHeight)) {
                     appBarParams.height = toolbarHeight;
                     appBarLayout.requestLayout();
                     appBarLayout.findViewById(R.id.toolbar_layout).animate().alpha(1).setDuration(400);
@@ -396,6 +395,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
                     if (isLocated) {
                         firstStart();
                     }
+
                 }
 
                 // Fade out intro content
