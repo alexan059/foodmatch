@@ -2,14 +2,22 @@ package com.fancyfood.foodmatch.helpers;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.GpsStatus;
 import android.location.Location;
+import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
+import com.fancyfood.foodmatch.preferences.Constants;
+import com.fancyfood.foodmatch.services.StatusService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
@@ -18,7 +26,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
-public class GoogleApiLocationHelper implements OnConnectionFailedListener, ConnectionCallbacks, LocationListener {
+public class GoogleApiLocationHelper implements OnConnectionFailedListener, ConnectionCallbacks, LocationListener, GpsStatus.Listener {
 
     private static final String TAG = GoogleApiLocationHelper.class.getSimpleName();
 
@@ -35,11 +43,21 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
 
     public interface OnLocationChangedListener {
         void onLocationChanged(Location location);
+
+        void onGpsDisabled();
+
         void showPermissionDialog();
     }
 
     public GoogleApiLocationHelper(Context context) {
         this.context = context;
+
+        final LocationManager manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            listener.showPermissionDialog();
+        }
+        manager.addGpsStatusListener(this);
 
         buildGoogleApiClient();
         connect();
@@ -64,7 +82,7 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
     }
 
     public void connect() {
-        if (googleApiClient != null) {
+        if (googleApiClient != null && !googleApiClient.isConnected()) {
             googleApiClient.connect();
             Log.d(TAG, "Google Api Client connecting...");
         }
@@ -100,8 +118,7 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             listener.showPermissionDialog();
-        }
-        else {
+        } else {
             LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
         }
     }
@@ -126,8 +143,10 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             listener.showPermissionDialog();
-        }
-        else {
+        } else if (!isGpsEnabled(context, false, false)) {
+            listener.onGpsDisabled();
+        } else {
+
             // Get last location and store it
             currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
 
@@ -151,6 +170,49 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.d(TAG, "onConnectionFailed: connectionResult.toString() = " + connectionResult.toString());
+        Log.d(TAG, "onGpsDisabled: connectionResult.toString() = " + connectionResult.toString());
+    }
+
+    public static boolean isGpsEnabled(Context context, boolean showMessage, boolean startService) {
+        final LocationManager manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        boolean isEnabled = manager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+        if (!isEnabled) {
+            if (startService) {
+                Intent intent = new Intent(context, StatusService.class);
+                intent.setData(Uri.parse(Constants.GPS_DISBALED));
+                context.startService(intent);
+            }
+
+            if (showMessage) buildAlertMessageNoGps(context);
+        }
+
+        return isEnabled;
+    }
+
+    @Override
+    public void onGpsStatusChanged(int event) {
+        if (event == GpsStatus.GPS_EVENT_STOPPED) listener.onGpsDisabled();
+    }
+
+    /**
+     * Method called when GPS is unavailable.
+     */
+    private static void buildAlertMessageNoGps(final Context context) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage("Dein GPS Standort kann nicht abgerufen werden. GPS einschalten?")
+                .setCancelable(false)
+                .setPositiveButton("Ja", new DialogInterface.OnClickListener() {
+                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        context.startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("Nein", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        dialog.cancel();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
     }
 }

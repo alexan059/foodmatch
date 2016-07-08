@@ -1,10 +1,13 @@
 package com.fancyfood.foodmatch.activities;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +18,7 @@ import android.support.design.widget.NavigationView.OnNavigationItemSelectedList
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MotionEventCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.util.TypedValue;
@@ -46,6 +50,7 @@ import com.fancyfood.foodmatch.preferences.Preferences;
 import com.fancyfood.foodmatch.services.CardsReceiver;
 import com.fancyfood.foodmatch.services.CardsPullService;
 import com.fancyfood.foodmatch.services.CardsReceiver.OnDataReceiveListener;
+import com.fancyfood.foodmatch.services.StatusReceiver;
 import com.fancyfood.foodmatch.services.TokenReceiver;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
@@ -111,6 +116,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
         // Set intent filter for receiving data
         setIntentFilter();
+
+
     }
 
     @Override
@@ -139,17 +146,30 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         Preferences.storeRadius(this, radius);
     }
 
-    /* IntentService for receiving data */
+    @Override
+    protected void onPause() {
+        super.onPause();
 
-    private void setIntentFilter() {
-        IntentFilter dataFilter = new IntentFilter(Constants.BROADCAST_ACTION);
-        CardsReceiver dataReceiver = new CardsReceiver(this);
-        LocalBroadcastManager.getInstance(this).registerReceiver(dataReceiver, dataFilter);
+        // Disconnect location helper
+        if (locationHelper != null && locationHelper.isConnected()) {
+            locationHelper.disconnect();
+        }
 
-        IntentFilter tokenFilter = new IntentFilter(Constants.BROADCAST_TOKEN);
-        TokenReceiver tokenReceiver = new TokenReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(tokenReceiver, tokenFilter);
+        // Store preferences if changed
+        Preferences.storeRadius(this, radius);
     }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+
+        // Connect the location helper
+        if (locationHelper != null && !locationHelper.isConnected()) {
+            locationHelper.connect();
+        }
+    }
+
+    /* IntentService for receiving data */
 
     private void firstStart() {
         if (!isStarted) {
@@ -264,6 +284,11 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         }
 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public void onGpsDisabled() {
+        GoogleApiLocationHelper.isGpsEnabled(this, true, true);
     }
 
     /* Helper methods */
@@ -389,6 +414,20 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         btLike.animate().alpha(1).setDuration(200);
         btDislike.setVisibility(View.VISIBLE);
         btDislike.animate().alpha(1).setDuration(200);
+    }
+
+    private void setIntentFilter() {
+        IntentFilter dataFilter = new IntentFilter(Constants.BROADCAST_ACTION);
+        CardsReceiver dataReceiver = new CardsReceiver(this);
+        LocalBroadcastManager.getInstance(this).registerReceiver(dataReceiver, dataFilter);
+
+        IntentFilter tokenFilter = new IntentFilter(Constants.BROADCAST_TOKEN);
+        TokenReceiver tokenReceiver = new TokenReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(tokenReceiver, tokenFilter);
+
+        IntentFilter statusFilter = new IntentFilter(Constants.BROADCAST_STATUS);
+        StatusReceiver statusReceiver = new StatusReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(statusReceiver, statusFilter);
     }
 
     /* On touch and on click listener */

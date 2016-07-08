@@ -2,6 +2,7 @@ package com.fancyfood.foodmatch.preferences;
 
 public final class Constants {
     public static final String BROADCAST_ACTION = "com.fancyfood.foodmatch.DATA_BROADCAST";
+    public static final String BROADCAST_STATUS = "com.fancyfood.foodmatch.STATUS_BROADCAST";
     public static final String BROADCAST_TOKEN = "com.fancyfood.foodmatch.TOKEN_BROADCAST";
     public static final String EXTENDED_DATA_STATUS = "com.fancyfood.foodmatch.STATUS";
     public static final String EXTENDED_DATA_TOKEN = "com.fancyfood.foodmatch.TOKEN";
@@ -9,6 +10,10 @@ public final class Constants {
     public static final String DATA_RECEIVED = "com.fancyfood.foodmatch.RECEIVED";
     public static final String DATA_NO_RESULTS = "com.fancyfood.foodmatch.NO_RESULTS";
     public static final String DATA_PARSE_ERROR = "com.fancyfood.foodmatch.PARSE_ERROR";
+
+    // Status for StatusService
+    public static final String GPS_ENABLED = "com.fancyfood.foodmatch.GPS_ENABLED";
+    public static final String GPS_DISBALED = "com.fancyfood.foodmatch.GPS_DISABLED";
 
 
     // TODO timestamp format for secret 2016-07-06 10:13:56

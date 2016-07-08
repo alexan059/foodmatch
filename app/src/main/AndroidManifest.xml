@@ -52,6 +52,9 @@
         <service
             android:name=".services.AuthenticationService"
             android:exported="false"/>
+        <service
+            android:name=".services.StatusService"
+            android:exported="false"/>
 
     </application>
 

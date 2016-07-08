@@ -2,7 +2,11 @@ package com.fancyfood.foodmatch.core;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.location.LocationManager;
 import android.support.multidex.MultiDex;
+import android.support.v7.app.AlertDialog;
 
 import com.fancyfood.foodmatch.helpers.GoogleApiLocationHelper;
 
@@ -22,6 +26,8 @@ public class CoreApplication extends Application {
         // Reference this instance to shared attribute
         instance = this;
         googleApiHelper = new GoogleApiLocationHelper(this);
+
+
     }
 
     /**
