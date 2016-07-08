@@ -55,6 +55,9 @@
         <service
             android:name=".services.StatusService"
             android:exported="false"/>
+        <service
+            android:name=".services.RatingsPushService"
+            android:exported="false"/>
 
     </application>
 

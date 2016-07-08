@@ -16,6 +16,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
+import com.fancyfood.foodmatch.R;
 import com.fancyfood.foodmatch.preferences.Constants;
 import com.fancyfood.foodmatch.services.StatusService;
 import com.google.android.gms.common.ConnectionResult;
@@ -200,7 +201,9 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
      */
     private static void buildAlertMessageNoGps(final Context context) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setMessage("Dein GPS Standort kann nicht abgerufen werden. GPS einschalten?")
+        builder.setTitle("Kein Standort")
+                .setMessage("Dein Standort kann nicht ermittelt werden. Bitte schalte GPS ein.")
+                .setIcon(R.drawable.place)
                 .setCancelable(false)
                 .setPositiveButton("Ja", new DialogInterface.OnClickListener() {
                     public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {

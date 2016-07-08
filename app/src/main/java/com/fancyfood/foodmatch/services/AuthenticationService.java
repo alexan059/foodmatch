@@ -25,11 +25,11 @@ public class AuthenticationService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "Intent service started.");
 
-        String uri = intent.getDataString();
+        String deviceId = intent.getStringExtra("device-id");
+        String timestamp = intent.getStringExtra("timestamp");
+        String hash = intent.getStringExtra("hash");
 
-        HashMap<String, String> data = new HashMap<>();
-        data.put("device_mac", uri);
-        String token = HttpConnectionHelper.requestToken(data);
+        String token = HttpConnectionHelper.requestToken(deviceId, timestamp, hash);
 
         // Has results
         if (token != null) {

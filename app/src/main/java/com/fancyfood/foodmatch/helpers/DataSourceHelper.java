@@ -31,6 +31,14 @@ public class DataSourceHelper {
         ratingsDataSource.createRating(rating);
     }
 
+    public ArrayList<Rating> getNewRatings(String timestamp) {
+        return ratingsDataSource.getNewRatings(timestamp);
+    }
+
+    public int countNewRatings(String timestamp) {
+        return ratingsDataSource.getRatingsCount(timestamp);
+    }
+
     /* Dishes Table */
 
     public void addCardsBatch(ArrayList<Card> cardsList) {

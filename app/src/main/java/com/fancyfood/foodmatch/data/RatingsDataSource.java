@@ -12,6 +12,7 @@ import com.fancyfood.foodmatch.models.Rating;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry.TABLE_NAME;
 import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry._ID;
 import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry.COLUMN_NAME_CREATED_AT;
 import static com.fancyfood.foodmatch.data.RatingsContract.RatingEntry.COLUMN_NAME_DISH_ID;
@@ -51,9 +52,9 @@ public class RatingsDataSource {
         values.put(COLUMN_NAME_LNG, rating.getLocation().getLongitude());
 
         //write data in the db/ table
-        long insertId = db.insert(RatingsContract.RatingEntry.TABLE_NAME, null, values);
+        long insertId = db.insert(TABLE_NAME, null, values);
 
-        Cursor cursor = db.query(RatingsContract.RatingEntry.TABLE_NAME,columns,
+        Cursor cursor = db.query(TABLE_NAME,columns,
                 _ID + "=" + insertId, null, null, null, null);
 
         cursor.moveToFirst();
@@ -64,12 +65,50 @@ public class RatingsDataSource {
         return ratingMemo;
     }
 
+    public ArrayList<Rating> getNewRatings(String timestamp) {
+        db = dbHelper.getReadableDatabase();
+
+        String selection = COLUMN_NAME_CREATED_AT + " > ?";
+        String[] selectionArgs = { timestamp };
+
+        Cursor cursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+        cursor.moveToFirst();
+
+        Rating rating;
+        ArrayList<Rating> ratingsList = new ArrayList<>();
+
+        while(!cursor.isAfterLast()) {
+            rating = cursorToRatingMemo(cursor);
+            ratingsList.add(rating);
+            cursor.moveToNext();
+        }
+
+        cursor.close();
+        db.close();
+
+        return ratingsList;
+    }
+
+    public int getRatingsCount(String timestamp) {
+        db = dbHelper.getReadableDatabase();
+
+        String selection = COLUMN_NAME_CREATED_AT + " > ?";
+        String[] selectionArgs = { timestamp };
+
+        Cursor cursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+
+        int count = cursor.getCount();
+        cursor.close();
+        db.close();
+        return count;
+    }
+
     //method to get/read all likes(favorites)
     public List<Rating> getAllRatingMemos() {
         db = dbHelper.getReadableDatabase();
         List<Rating> ratingMemoList = new ArrayList<Rating>();
 
-        Cursor cursor = db.query(RatingsContract.RatingEntry.TABLE_NAME,
+        Cursor cursor = db.query(TABLE_NAME,
                 columns, null, null, null, null, null);
 
         cursor.moveToFirst();

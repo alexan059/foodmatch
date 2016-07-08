@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.fancyfood.foodmatch.authenticators.ApiAuthenticator;
 import com.fancyfood.foodmatch.models.Card;
+import com.fancyfood.foodmatch.models.Rating;
 import com.fancyfood.foodmatch.preferences.Constants;
 
 import org.json.JSONArray;
@@ -17,15 +18,18 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -36,10 +40,9 @@ public final class HttpConnectionHelper {
 
     private static final String TAG = HttpConnectionHelper.class.getSimpleName();
 
-    public static String requestToken(Map<String, String> data) {
+    public static String requestToken(String deviceId, String timestamp, String hash) {
         HttpURLConnection connection = null;
         InputStream inputStream = null;
-        OutputStream outputStream = null;
         String token = null;
 
         try {
@@ -53,21 +56,20 @@ public final class HttpConnectionHelper {
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/text; charset=utf-8");
 
-            outputStream = new BufferedOutputStream(connection.getOutputStream());
-
-            writeStream(outputStream, mapToString(data));
+            connection.setRequestProperty("FM-API-Device-ID", deviceId);
+            connection.setRequestProperty("FM-API-Timestamp", timestamp);
+            connection.setRequestProperty("FM-API-Hash", hash);
 
             Log.d(TAG, "Response code on request token: " + String.valueOf(connection.getResponseCode()));
 
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
-                inputStream = new BufferedInputStream(connection.getInputStream());
-                String bufferedInput = readStream(inputStream);
+                inputStream = connection.getInputStream();
+                String result = readStream(inputStream);
+                JSONObject response = new JSONObject(result);
 
-                JSONObject parentObject = new JSONObject(bufferedInput);
-
-                if(parentObject.getString("status").equals("success")) {
-                    token = parentObject.getString("data");
+                if (response.getString("status").equals("success")) {
+                    token = response.getString("data");
                 }
 
             }
@@ -80,9 +82,6 @@ public final class HttpConnectionHelper {
             try {
                 if (inputStream != null) {
                     inputStream.close();
-                }
-                if (outputStream != null) {
-                    outputStream.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -99,7 +98,7 @@ public final class HttpConnectionHelper {
 
         HttpURLConnection connection = null;
         InputStream stream = null;
-        JSONArray resultArray = null;
+        JSONArray response = null;
 
         try  {
 
@@ -118,7 +117,8 @@ public final class HttpConnectionHelper {
                 if (stream != null) {
 
                     // Get result array
-                    resultArray = parseJSONArray(stream);
+                    String result = readStream(stream);
+                    response = new JSONArray(result);
 
                 } else {
                     // Stream error
@@ -144,7 +144,67 @@ public final class HttpConnectionHelper {
             }
         }
 
-        return resultArray;
+        return response;
+    }
+
+    public static boolean sendRatings(Context context, JSONObject ratings) {
+        HttpURLConnection connection = null;
+        InputStream inputStream = null;
+        OutputStream outputStream = null;
+        boolean success = false;
+
+        URL location = getFullURL(context, "statistics");
+
+        if (location == null) return false;
+
+        try {
+            connection = (HttpURLConnection) location.openConnection();
+
+            connection.setDoOutput(true);
+            connection.setReadTimeout(10000);
+            connection.setChunkedStreamingMode(0); // optimizing performance
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+
+            outputStream = new BufferedOutputStream(connection.getOutputStream());
+            writeStream(outputStream, ratings);
+
+            Log.d(TAG, "Response Code: " + connection.getResponseCode());
+
+            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+
+                inputStream = connection.getInputStream();
+                String result = readStream(inputStream);
+                JSONObject response = new JSONObject(result);
+
+                if (response.getString("status").equals("success")) {
+                    String message = response.getString("data");
+
+                    Log.d(TAG, message);
+
+                    success = true;
+                }
+            }
+        } catch (JSONException | IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return success;
     }
 
     public static void downloadImages(Context context, ArrayList<Card> cardsList) {
@@ -193,18 +253,6 @@ public final class HttpConnectionHelper {
         return directory.getAbsolutePath();
     }
 
-    public static JSONArray parseJSONArray(InputStream stream) throws IOException, JSONException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-        StringBuilder builder = new StringBuilder();
-        String line;
-
-        while ((line = reader.readLine()) != null) {
-            builder.append(line);
-        }
-
-        return new JSONArray(builder.toString());
-    }
-
     public static URL getFullURL(Context context, String uri) {
         String token = ApiAuthenticator.getToken(context);
 
@@ -222,41 +270,21 @@ public final class HttpConnectionHelper {
         return null;
     }
 
-    public static String mapToString(Map<String, String> map) {
+    public static String readStream(InputStream stream) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+        StringBuilder builder = new StringBuilder();
+        String line;
 
-        StringBuilder stringBuilder = new StringBuilder();
-
-        for (String key : map.keySet()) {
-            if (stringBuilder.length() > 0) {
-                stringBuilder.append("&");
-            }
-            String value = map.get(key);
-            try {
-                stringBuilder.append((key != null ? URLEncoder.encode(key, "UTF-8") : ""));
-                stringBuilder.append("=");
-                stringBuilder.append(value != null ? URLEncoder.encode(value, "UTF-8") : "");
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException("This method requires UTF-8 encoding support", e);
-            }
+        while ((line = reader.readLine()) != null) {
+            builder.append(line);
         }
-        return stringBuilder.toString();
+
+        return builder.toString();
     }
 
-    private static void writeStream(OutputStream out, String serializedData) throws IOException {
-        out.write(serializedData.getBytes());
-        out.flush();
+    private static void writeStream(OutputStream stream, JSONObject object) throws IOException {
+        stream.write(object.toString().getBytes());
+        stream.flush();
     }
 
-    private static String readStream(InputStream inputStream) throws IOException {
-
-        StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream), 1000);
-        for (String line = reader.readLine(); line != null; line =reader.readLine()) {
-
-            stringBuilder.append(line);
-        }
-        inputStream.close();
-
-        return stringBuilder.toString();
-    }
 }

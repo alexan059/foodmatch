@@ -1,6 +1,8 @@
 package com.fancyfood.foodmatch.activities;
 
 import android.Manifest;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -50,6 +52,7 @@ import com.fancyfood.foodmatch.preferences.Preferences;
 import com.fancyfood.foodmatch.services.CardsReceiver;
 import com.fancyfood.foodmatch.services.CardsPullService;
 import com.fancyfood.foodmatch.services.CardsReceiver.OnDataReceiveListener;
+import com.fancyfood.foodmatch.services.RatingsPushService;
 import com.fancyfood.foodmatch.services.StatusReceiver;
 import com.fancyfood.foodmatch.services.TokenReceiver;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
@@ -126,6 +129,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         if (locationHelper != null && !locationHelper.isConnected()) {
             locationHelper.connect();
         }
+
+        startSyncService();
     }
 
     @Override
@@ -140,8 +145,12 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
             locationHelper.disconnect();
         }
 
+        //Preferences.storeToken(this, null); // TODO Debug;
+
         // Store preferences if changed
         Preferences.storeRadius(this, radius);
+
+        stopSyncService();
     }
 
     @Override
@@ -165,6 +174,27 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         if (locationHelper != null && !locationHelper.isConnected()) {
             locationHelper.connect();
         }
+    }
+
+    /* Sync Service */
+
+    private void startSyncService() {
+        AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        Intent intent = new Intent(this, RatingsPushService.class);
+        startService(intent);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 60000 * 5, pendingIntent);
+    }
+
+    private void stopSyncService() {
+        AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        Intent intent = new Intent(this, RatingsPushService.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+
+        manager.cancel(pendingIntent);
     }
 
     /* IntentService for receiving data */

@@ -11,6 +11,9 @@ public final class Constants {
     public static final String DATA_NO_RESULTS = "com.fancyfood.foodmatch.NO_RESULTS";
     public static final String DATA_PARSE_ERROR = "com.fancyfood.foodmatch.PARSE_ERROR";
 
+    // Sync Service Code
+    public static final int SYNC_SERVICE = 555777999;
+
     // Status for StatusService
     public static final String GPS_ENABLED = "com.fancyfood.foodmatch.GPS_ENABLED";
     public static final String GPS_DISBALED = "com.fancyfood.foodmatch.GPS_DISABLED";
