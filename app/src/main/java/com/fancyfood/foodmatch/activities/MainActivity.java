@@ -182,7 +182,6 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         Intent intent = new Intent(this, RatingsPushService.class);
-        startService(intent);
         PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 60000 * 5, pendingIntent);
