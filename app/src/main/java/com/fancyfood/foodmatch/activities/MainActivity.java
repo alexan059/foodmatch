@@ -203,7 +203,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         Intent intent = new Intent(this, RatingsPushService.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, Constants.SYNC_SERVICE, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getService(this, Constants.SYNC_SERVICE, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         manager.cancel(pendingIntent);
     }
