@@ -27,7 +27,6 @@ public class CoreApplication extends Application {
         instance = this;
         googleApiHelper = new GoogleApiLocationHelper(this);
 
-
     }
 
     /**

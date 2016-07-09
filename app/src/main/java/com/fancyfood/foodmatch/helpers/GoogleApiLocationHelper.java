@@ -17,6 +17,7 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
 import com.fancyfood.foodmatch.R;
+import com.fancyfood.foodmatch.core.CoreApplication;
 import com.fancyfood.foodmatch.preferences.Constants;
 import com.fancyfood.foodmatch.services.StatusService;
 import com.google.android.gms.common.ConnectionResult;
@@ -52,13 +53,6 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
 
     public GoogleApiLocationHelper(Context context) {
         this.context = context;
-
-        final LocationManager manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            listener.showPermissionDialog();
-        }
-        manager.addGpsStatusListener(this);
 
         buildGoogleApiClient();
         connect();
@@ -101,7 +95,7 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
     }
 
     public void startDelayedService() {
-        if (locationRequest == null) {
+        if (locationRequest == null && isConnected()) {
             createLocationRequests();
             startLocationUpdates();
         }
@@ -140,6 +134,8 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        final LocationManager manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
         // API 23+ Check explicitly for granted permissions or retrieve them
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -147,6 +143,8 @@ public class GoogleApiLocationHelper implements OnConnectionFailedListener, Conn
         } else if (!isGpsEnabled(context, false, false)) {
             listener.onGpsDisabled();
         } else {
+
+            manager.addGpsStatusListener(this);
 
             // Get last location and store it
             currentLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
