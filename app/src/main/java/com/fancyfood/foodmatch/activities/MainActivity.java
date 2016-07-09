@@ -119,6 +119,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
         // Set intent filter for receiving data
         setIntentFilter();
+
+        Log.d(TAG, "onCreate");
     }
 
     @Override
@@ -131,6 +133,9 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         }
 
         startSyncService();
+
+        Log.d(TAG, "onStart");
+
     }
 
     @Override
@@ -145,12 +150,15 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
             locationHelper.disconnect();
         }
 
-        //Preferences.storeToken(this, null); // TODO Debug;
+        // Debug only
+        //Preferences.storeToken(this, null);
 
         // Store preferences if changed
         Preferences.storeRadius(this, radius);
 
         stopSyncService();
+
+        Log.d(TAG, "onStop");
     }
 
     @Override
@@ -164,6 +172,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
         // Store preferences if changed
         Preferences.storeRadius(this, radius);
+
+        Log.d(TAG, "onPause");
     }
 
     @Override
@@ -174,6 +184,8 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         if (locationHelper != null && !locationHelper.isConnected()) {
             locationHelper.connect();
         }
+
+        Log.d(TAG, "onPostResume");
     }
 
     /* Sync Service */
@@ -182,7 +194,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         Intent intent = new Intent(this, RatingsPushService.class);
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getService(this, Constants.SYNC_SERVICE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 60000 * 5, pendingIntent);
     }
@@ -191,7 +203,7 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         Intent intent = new Intent(this, RatingsPushService.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, Constants.SYNC_SERVICE, intent, 0);
 
         manager.cancel(pendingIntent);
     }
@@ -238,6 +250,11 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
     public void onNoResult() {
         NoResultDialogFragment dialog = new NoResultDialogFragment();
         dialog.show(getFragmentManager(), NoResultDialogFragment.class.getSimpleName());
+    }
+
+    @Override
+    public void onRestartService() {
+        startDataService();
     }
 
     @Override

@@ -4,12 +4,15 @@ import android.location.Location;
 
 public class Rating {
 
+    public static final int LIKE = 1;
+    public static final int DISLIKE = 0;
+
     private String reference;
-    private boolean rating;
+    private int rating;
     private String timestamp;
     private Location location;
 
-    public Rating(String reference, boolean rating, Location location, String timestamp) {
+    public Rating(String reference, int rating, Location location, String timestamp) {
         this.reference = reference;
         this.rating = rating;
         this.location = location;
@@ -24,11 +27,11 @@ public class Rating {
         this.reference = reference;
     }
 
-    public boolean getRating() {
+    public int getRating() {
         return rating;
     }
 
-    public void setRating(boolean rating) {
+    public void setRating(int rating) {
         this.rating = rating;
     }
 

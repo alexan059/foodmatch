@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.fancyfood.foodmatch.helpers.DataSourceHelper;
 import com.fancyfood.foodmatch.helpers.HttpConnectionHelper;
+import com.fancyfood.foodmatch.preferences.Preferences;
 import com.fancyfood.foodmatch.util.JSONCardsParser;
 import com.fancyfood.foodmatch.preferences.Constants;
 import com.fancyfood.foodmatch.models.Card;
@@ -56,7 +57,12 @@ public class CardsPullService extends IntentService {
 
         }
         else {
-            sendBroadcastDataStatus(Constants.DATA_NO_RESULTS);
+            if (results == null) {
+                Preferences.storeToken(this, null);
+                sendBroadcastDataStatus(Constants.DATA_RESTART_SERVICE);
+            } else {
+                sendBroadcastDataStatus(Constants.DATA_NO_RESULTS);
+            }
         }
     }
 

@@ -10,6 +10,7 @@ public final class Constants {
     public static final String DATA_RECEIVED = "com.fancyfood.foodmatch.RECEIVED";
     public static final String DATA_NO_RESULTS = "com.fancyfood.foodmatch.NO_RESULTS";
     public static final String DATA_PARSE_ERROR = "com.fancyfood.foodmatch.PARSE_ERROR";
+    public static final String DATA_RESTART_SERVICE = "com.fancyfood.foodmatch.RESTART_SERVICE";
 
     // Sync Service Code
     public static final int SYNC_SERVICE = 555777999;

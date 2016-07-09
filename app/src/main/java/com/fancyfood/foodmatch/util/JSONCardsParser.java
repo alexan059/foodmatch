@@ -80,16 +80,4 @@ public final class JSONCardsParser {
 
         return card;
     }
-
-    //JSONObject media = dish.getJSONObject("media");
-    //String fileName = media.getString("file");
-    //URL imageUrl = getFullUrl("restaurants/media/" + fileName);
-
-    //HttpConnectionHelper.downloadImage(this, imageUrl, fileName);
-
-    //Drawable image = loadImage(directory, fileName);
-
-    //Card card = new Card(_id, location, null, name, locationName, 0, 0);
-    //card.setLocationId(locationReference);
-    //card.setImageName(fileName);
 }

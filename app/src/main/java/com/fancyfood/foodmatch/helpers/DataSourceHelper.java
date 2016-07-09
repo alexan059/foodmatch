@@ -22,21 +22,25 @@ public class DataSourceHelper {
     /* Ratings Table */
 
     public void addPositiveRating(Card card) {
-        Rating rating = new Rating(card.getDishId(), true, card.getLocation(), null);
+        Rating rating = new Rating(card.getDishId(), Rating.LIKE, card.getLocation(), null);
         ratingsDataSource.createRating(rating);
     }
 
     public void addNegativeRating(Card card) {
-        Rating rating = new Rating(card.getDishId(), false, card.getLocation(), null);
+        Rating rating = new Rating(card.getDishId(), Rating.DISLIKE, card.getLocation(), null);
         ratingsDataSource.createRating(rating);
     }
 
-    public ArrayList<Rating> getNewRatings(String timestamp) {
-        return ratingsDataSource.getNewRatings(timestamp);
+    public ArrayList<Rating> getNewRatings() {
+        return ratingsDataSource.getNewRatings();
     }
 
-    public int countNewRatings(String timestamp) {
-        return ratingsDataSource.getRatingsCount(timestamp);
+    public int countNewRatings() {
+        return ratingsDataSource.getRatingsCount();
+    }
+
+    public void truncateRatings() {
+        ratingsDataSource.truncate();
     }
 
     /* Dishes Table */

@@ -16,7 +16,7 @@ public final class JSONRatingsParser {
 
     private static final String TAG = JSONRatingsParser.class.getSimpleName();
 
-    public static JSONArray createJSONArray(ArrayList<Rating> ratings) throws JSONException {
+    public static JSONArray parse(ArrayList<Rating> ratings) throws JSONException {
         JSONArray array = new JSONArray();
 
         for (Rating rating : ratings) {
@@ -33,7 +33,7 @@ public final class JSONRatingsParser {
         geo.put(rating.getLocation().getLongitude());
         geo.put(rating.getLocation().getLatitude());
 
-        object.put("rating", (rating.getRating()) ? 1 : 0);
+        object.put("rating", rating.getRating());
         object.put("geo", geo);
         object.put("dish_id", rating.getReference());
         object.put("created_at", rating.getTimestamp());

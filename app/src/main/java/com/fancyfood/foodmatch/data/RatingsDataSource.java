@@ -65,13 +65,10 @@ public class RatingsDataSource {
         return ratingMemo;
     }
 
-    public ArrayList<Rating> getNewRatings(String timestamp) {
+    public ArrayList<Rating> getNewRatings() {
         db = dbHelper.getReadableDatabase();
 
-        String selection = COLUMN_NAME_CREATED_AT + " > ?";
-        String[] selectionArgs = { timestamp };
-
-        Cursor cursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+        Cursor cursor = db.query(TABLE_NAME, columns, null, null, null, null, null);
         cursor.moveToFirst();
 
         Rating rating;
@@ -89,18 +86,23 @@ public class RatingsDataSource {
         return ratingsList;
     }
 
-    public int getRatingsCount(String timestamp) {
+    public int getRatingsCount() {
         db = dbHelper.getReadableDatabase();
 
-        String selection = COLUMN_NAME_CREATED_AT + " > ?";
-        String[] selectionArgs = { timestamp };
-
-        Cursor cursor = db.query(TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+        Cursor cursor = db.query(TABLE_NAME, columns, null, null, null, null, null);
 
         int count = cursor.getCount();
+
+        Log.d(TAG, String.valueOf(count) + " rating records.");
         cursor.close();
         db.close();
         return count;
+    }
+
+    public void truncate() {
+        db = dbHelper.getWritableDatabase();
+        db.execSQL("DELETE FROM " + TABLE_NAME);
+        db.close();
     }
 
     //method to get/read all likes(favorites)
@@ -131,13 +133,13 @@ public class RatingsDataSource {
     private Rating cursorToRatingMemo(Cursor cursor) {
 
         int idDishID = cursor.getColumnIndex(COLUMN_NAME_DISH_ID);
-        int idRating = cursor.getColumnIndex(COLUMN_NAME_DISH_ID);
+        int idRating = cursor.getColumnIndex(COLUMN_NAME_RATING);
         int idCreatedAt = cursor.getColumnIndex(COLUMN_NAME_CREATED_AT);
         int idLat = cursor.getColumnIndex(COLUMN_NAME_LAT);
         int idLng = cursor.getColumnIndex(COLUMN_NAME_LNG);
 
         String id = cursor.getString(idDishID);
-        boolean rating = (cursor.getInt(idRating) == 1);
+        int rating = cursor.getInt(idRating);
         Location location = new Location("");
         location.setLatitude(cursor.getFloat(idLat));
         location.setLongitude(cursor.getFloat(idLng));

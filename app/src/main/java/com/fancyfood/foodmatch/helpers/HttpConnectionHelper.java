@@ -70,6 +70,10 @@ public final class HttpConnectionHelper {
 
                 if (response.getString("status").equals("success")) {
                     token = response.getString("data");
+                } else if (response.getString("status").equals("error")) {
+                    if (response.getString("message").equals("token_already_created")) {
+                        token = response.getString("data");
+                    }
                 }
 
             }
@@ -97,8 +101,8 @@ public final class HttpConnectionHelper {
         if (location == null) return null;
 
         HttpURLConnection connection = null;
-        InputStream stream = null;
-        JSONArray response = null;
+        InputStream inputStream = null;
+        JSONArray dataArray = null;
 
         try  {
 
@@ -111,14 +115,24 @@ public final class HttpConnectionHelper {
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 
                 // Get input stream
-                stream = connection.getInputStream();
+                inputStream = connection.getInputStream();
 
                 // If stream has content
-                if (stream != null) {
+                if (inputStream != null) {
 
                     // Get result array
-                    String result = readStream(stream);
-                    response = new JSONArray(result);
+                    String result = readStream(inputStream);
+                    JSONObject response = new JSONObject(result);
+
+                    if (response.getString("status").equals("success")) {
+                        dataArray = response.getJSONArray("data");
+                    } else if (response.getString("status").equals("error")) {
+                        if (response.getString("message").equals("token_not_valid")) {
+                            dataArray = null;
+                        } else if (response.getString("message").equals("restaurants_empty")) {
+                            dataArray = new JSONArray("[]");
+                        }
+                    }
 
                 } else {
                     // Stream error
@@ -136,18 +150,18 @@ public final class HttpConnectionHelper {
                 connection.disconnect();
             }
             try {
-                if (stream != null) {
-                    stream.close();
+                if (inputStream != null) {
+                    inputStream.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-        return response;
+        return dataArray;
     }
 
-    public static boolean sendRatings(Context context, JSONObject ratings) {
+    public static boolean sendRatings(Context context, JSONArray ratings) {
         HttpURLConnection connection = null;
         InputStream inputStream = null;
         OutputStream outputStream = null;
@@ -282,8 +296,8 @@ public final class HttpConnectionHelper {
         return builder.toString();
     }
 
-    private static void writeStream(OutputStream stream, JSONObject object) throws IOException {
-        stream.write(object.toString().getBytes());
+    private static void writeStream(OutputStream stream, JSONArray array) throws IOException {
+        stream.write(array.toString().getBytes());
         stream.flush();
     }
 

@@ -43,7 +43,7 @@ public final class ApiAuthenticator {
 
             String hash = Constants.API_SECRET + SEPARATOR + deviceId + SEPARATOR + timestamp;
 
-            Log.d(TAG, hash);
+            //Log.d(TAG, hash); // Never show secret only for debug
 
             String hashed = null;
             try {
