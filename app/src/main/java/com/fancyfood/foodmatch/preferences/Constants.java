@@ -1,5 +1,11 @@
 package com.fancyfood.foodmatch.preferences;
 
+import android.content.Intent;
+import android.content.res.Resources;
+
+import com.fancyfood.foodmatch.R;
+import com.fancyfood.foodmatch.core.CoreApplication;
+
 public final class Constants {
     public static final String BROADCAST_ACTION = "com.fancyfood.foodmatch.DATA_BROADCAST";
     public static final String BROADCAST_STATUS = "com.fancyfood.foodmatch.STATUS_BROADCAST";
@@ -21,7 +27,7 @@ public final class Constants {
 
 
     // TODO timestamp format for secret 2016-07-06 10:13:56
-    public static final String API_ENTRY_POINT = "http://api.collective-art.de/";
-    public static final String API_SECRET = "9~3YjmDR=lx>dI~l\"Qv3p62m3{u3>9";
-    public static final int API_VERSION = 1;
+    public static final String API_ENTRY_POINT = CoreApplication.getInstance().getApplicationContext().getString(R.string.api_entry_point);
+    public static final String API_SECRET = CoreApplication.getInstance().getApplicationContext().getString(R.string.api_secret);
+    public static final int API_VERSION = Integer.getInteger(CoreApplication.getInstance().getApplicationContext().getString(R.string.api_version));
 }

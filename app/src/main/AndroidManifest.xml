@@ -29,7 +29,7 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDmoln9kLkdlG8TeQoBQhPqBzOe-MUGIdk" />
+            android:value="@string/gmaps_api_key" />
 
         <activity android:name=".activities.MainActivity"
             android:screenOrientation="portrait"

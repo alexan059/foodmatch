@@ -219,7 +219,6 @@ public class MainActivity extends CoreActivity implements OnClickListener, OnTou
 
     private void startDataService() {
         // "restaurants/55.56/57.6/2000" -> resource/lat/lng/radius
-        // http://api.collective-art.de/restaurants/13.5264438/52.4569312/2000?pretty&token=n5DUfSC72hPABeEhu89Ex63soJ2oJCQfTxlim8MC6oHVLlrutMa3xDjDursL
         String lat = Double.toString(currentLocation.getLatitude());
         String lng = Double.toString(currentLocation.getLongitude());
         String rad = Integer.toString(radius) + "00";

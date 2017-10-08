@@ -27,8 +27,6 @@ public final class ApiAuthenticator {
     }
 
     public static String getToken(Context context) {
-        //return "n5DUfSC72hPABeEhu89Ex63soJ2oJCQfTxlim8MC6oHVLlrutMa3xDjDursL";
-
         String token = Preferences.restoreToken(context);
 
         if (token == null) {

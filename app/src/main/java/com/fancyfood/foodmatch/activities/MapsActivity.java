@@ -23,6 +23,7 @@ import com.akexorcist.googledirection.model.Direction;
 import com.akexorcist.googledirection.model.Step;
 import com.akexorcist.googledirection.util.DirectionConverter;
 import com.fancyfood.foodmatch.R;
+import com.fancyfood.foodmatch.core.CoreApplication;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -36,7 +37,7 @@ import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionCallback {
 
-    String serverKey = "AIzaSyBd65lCjwNb-1W03t4XZTfqQu9yjUhyssY";                                   //server Key for Google Direction API
+    String serverKey = CoreApplication.getInstance().getApplicationContext().getString(R.string.gpmas_secret);                                   //server Key for Google Direction API
     private LatLng origin;                                                                          //position of start address
     private LatLng camera;                                                                          //focus position
     private LocationManager manager;                                                                //for getting geo location
