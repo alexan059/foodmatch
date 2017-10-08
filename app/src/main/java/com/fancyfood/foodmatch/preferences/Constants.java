@@ -29,5 +29,5 @@ public final class Constants {
     // TODO timestamp format for secret 2016-07-06 10:13:56
     public static final String API_ENTRY_POINT = CoreApplication.getInstance().getApplicationContext().getString(R.string.api_entry_point);
     public static final String API_SECRET = CoreApplication.getInstance().getApplicationContext().getString(R.string.api_secret);
-    public static final int API_VERSION = Integer.getInteger(CoreApplication.getInstance().getApplicationContext().getString(R.string.api_version));
+    public static final int API_VERSION = Integer.parseInt(CoreApplication.getInstance().getApplicationContext().getString(R.string.api_version));
 }
